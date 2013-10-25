@@ -1,0 +1,129 @@
+\documentclass[10pt,a4paper,draft]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\title{LDSP- Linear Detection of Selection in Pooled sequence data}
+\date{}
+\author{Matthew Stephens \& Hussein Al-Asadi}
+\begin{document}
+\maketitle
+\section{Introduction}
+We break up the process into two phases.
+
+\textbf{Phase I}:
+The Intuition is that data at each SNP are binomial counts, which help estimate the frequency of a SNP in a pool, but they don't
+tell you the frequency exactly, they are noisy. But by combining information across multiple corrected SNPs, you can improve the estimated frequency of the test SNP
+
+\textbf{Phase II}:
+After we estimate the frequency of the putatively selected SNP in each replicate population, we estimate the group effect using a linear model which also allows us to model genetic drift with a normal error term.. The idea is that in the positively selected population, the group effect will be positive while negative in the negatively selected population, and 0 in the neutrally evolving population.
+
+\section{Phase I}
+Consider one lineage for now.
+
+Let  $y = (y_1, y_2, ..., y_p)'$ denote the vector of allele frequencies in the study sample.
+Let $E[y_{i}] = \mu_{i}$ and the frequency of the test SNP be $y_{t}$ . As in (Wen \& Stephens, 2010), we assume 
+\begin{equation}
+\vec{y} \sim N_p(\mu, \Sigma) \label{eq:prior}
+\end{equation}
+where $\mu$ and $\Sigma$ is calculated from a reference panel consisting of $2m$ haplotypes and $p$ SNPs. (Wen \& Stephens, 2010) derived the estimates for $\mu$ and $\Sigma$ from the haplotype copying model presented in (Li \$ Stephens, 2003).
+\begin{equation}
+\hat{\mu} = (1-\theta)f^{panel} + \frac{\theta}{2}1 
+\end{equation}
+\begin{equation}
+\hat{\Sigma} = (1-\theta)^2S + \frac{\theta}{2}(1-\frac{\theta}{2})I
+\end{equation}
+and $S$ is obtained from $\Sigma^{panel}$, specifically,
+ \begin{equation}
+   S_{i,j} = \left\{
+     \begin{array}{lr}
+       \Sigma_{i,j}^{panel} &  i =j\\
+       e^{-\frac{-\rho_{i,j}}{2m}} \Sigma_{i,j}^{panel} &  i \neq j
+     \end{array}
+   \right.
+\end{equation} 
+and,
+\begin{equation}
+\theta = \frac{(\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}{2m + (\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}
+\end{equation}
+
+\iffalse
+The distribution of $\{y_j: j \neq t\}$ given the test SNP,
+\begin{equation}
+\{y_i: i \neq t\} | y_t \sim N_{p-1}(\bar{\mu}, \bar{\Sigma}) \label{cond}
+\end{equation}
+where
+\begin{align*}
+\bar{\mu} = \vec{\mu_{i \neq t}} + \Sigma_{i \neq t, t}\frac{1}{\sigma_t^2}(y_t-\mu_{t}) 
+\end{align*}
+and
+\begin{align*}
+\hat{\Sigma} = \Sigma_{i \neq t, i \neq t} - \Sigma_{i \neq t, t}\frac{1}{\sigma_t^2}\Sigma_{t, i \neq t}
+\end{align*}
+\fi
+
+\subsection{Data at the test SNP}
+Let $(n_t^0, n_t^1)$ denote the counts of "0" and "1" alleles at SNP $t$ and $n_t = n_t^0 + n_t^1$. Then 
+\begin{align*}
+n_t^1 \sim Bin(n_t, X_t) \ \dot{\sim}  \ N(n_tX_t, n_tX_t(1-X_t)) \label{eq:napprox}
+\end{align*}
+where $X_t$ is the true population frequency of the SNP $t$ "1" allele. 
+\begin{equation}
+\implies \frac{n_t^1}{n_t} | X_j \ \dot{\sim} \ N(X_t, \frac{\hat{X_t}}{\hat{X_t}(1-\hat{X_t})}) \label{prior}
+\end{equation}
+where $\hat{X_t} = \frac{n_t^1}{n_t}$.
+
+
+\subsection{Measurement Error and Dispersion}
+
+We incorporate measurement error by introducing a single parameter (as in Wen \& Stephens) $\epsilon^2$ and assume
+\begin{equation}
+\vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \epsilon^2I)
+\end{equation}
+In the distribution of $\vec{y}$, we assumed that the panel and study individuals are from the sample population, and the parameters $\theta$ and $\rho$ are estimated without error. Deviations from these assumptions will cause over-dispersion: the true allele frequencies will lie further from their expected values than the model predicts. To allow this, we modify equation \ref{eq:prior} by introducing an over-dispersion paramters $\sigma^2$.
+\begin{equation}
+\vec{y^{true}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma})
+\end{equation}
+
+Combining both equations, we obtain,
+\begin{equation}
+ \vec{y^{obs}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + \epsilon^2I)
+\end{equation}
+where we can estimate $\sigma^2$ and $\epsilon^2$ by maximum likelihood.
+
+We use Bayes theorem to obtain the distribution for the true frequencies conditional on the observed data (as derived in Wen \& Stephens).
+\begin{align*}
+P(\vec{y^{true}} | \vec{y^{obs}}) = \frac{P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}})}{P(\vec{y^{obs}})} 
+\end{align*}
+\begin{equation}
+\sim N_p\Big((\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}(\frac{\hat{\Sigma}^{-1}\hat{\mu}}{\sigma^2} + \frac{\vec{y^{obs}}}{\epsilon^2}), (\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}\Big)\label{likl}
+\end{equation}
+
+\subsection{Estimating the true frequency at SNP t}
+....
+%We can calculate the likelihood for the frequency at SNP $j$ using Bayes theorem
+%\begin{equation}
+%L(f_{i,k,j}^{true} | \vec{f_{i,k}^{obs}}) = P(\vec{f_{i,k}^{obs}} | f_{i,k,j}^{true}) = %\frac{P(f_{i,k,j}^{true}|\vec{f_{i,k}^{obs}}) P(\vec{f_{i,k}^{obs}})} {P(f_{i,k,j}^{true})} 
+%\end{equation}
+%Why do we maximize the likelihood, don't we already have the best case (i.e. eqn \ref{likl})?
+
+\section{Phase II - estimating $\beta$}
+We can estimate the frequency of the test SNP in group $j$. Let the frequency of the test SNP in group $j$ and replicate $k$ be $f_{j,k}$. We can fit the following model for all groups $j$:
+
+\[
+\left(\begin{array}{c}
+log(\frac{1-f_{j,1}}{f_{j,1}}) \\
+\vdots \\
+log(\frac{1-f_{j,n}}{f_{j,n}})
+\end{array}\right)
+= \beta_j
+\left(\begin{array}{c}
+log(\frac{1-f^A}{f^A}) \\
+\vdots \\
+log(\frac{1-f^A}{f^A})
+\end{array}\right) + \vec{\epsilon_j}
+\]
+
+where $\vec{\epsilon_j} \sim N_n(0, \sigma_{d}^2I)$, $\sigma_d^2$ is the variance due to drift and $f_A$ is the frequency of the test SNP in the founding population.
+
+\end{document}
