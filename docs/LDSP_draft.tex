@@ -123,7 +123,7 @@ P(\vec{y^{true}} | \vec{y^{obs}}) = \frac{P(\vec{y^{obs}} | \vec{y^{true}}) P(\v
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
 
 \begin{equation}
-log(\frac{1-f_{i,k,j}}{f_{i,k,j}}) = \mu_j + \beta_j g_i + \epsilon
+log(\frac{1-f_{i,k,j}}{f_{i,k,j}}) = \mu_j + \beta_i,j g_i + \epsilon
 \end{equation}
 
 where $\epsilon \sim N_(0, \sigma_d^2)$, $\sigma_d^2$ is the variance due to drift, $\mu_j$ is the frequency of the $j$the SNP in the founding population and 
