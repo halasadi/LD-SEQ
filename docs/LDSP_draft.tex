@@ -22,11 +22,11 @@ After we estimate the frequency of the putatively selected SNP in each replicate
 Consider one lineage for now.
 
 Let  $y = (y_1, y_2, ..., y_p)'$ denote the vector of allele frequencies in the study sample.
-Let $E[y_{i}] = \mu_{i}$ and the frequency of the test SNP be $y_{t}$ . As in (Wen \& Stephens, 2010), we assume 
+Let $E[y_{i}] = \mu_{i}$ and the frequency of the test SNP be $y_{t}$  and $M$ denote the $2m$x$p$ panel (i.e. $2m$ haplotypes and $p$ SNPs). As in (Wen \& Stephens, 2010), we assume 
 \begin{equation}
-\vec{y} \sim N_p(\mu, \Sigma) \label{eq:prior}
+\vec{y} |M \sim N_p(\mu, \Sigma) \label{eq:prior}
 \end{equation}
-where $\mu$ and $\Sigma$ is calculated from a reference panel consisting of $2m$ haplotypes and $p$ SNPs. (Wen \& Stephens, 2010) derived the estimates for $\mu$ and $\Sigma$ from the haplotype copying model presented in (Li \& Stephens, 2003).
+(Wen \& Stephens, 2010) derived the estimates for $\mu$ and $\Sigma$ from the haplotype copying model presented in (Li \& Stephens, 2003).
 \begin{equation}
 \hat{\mu} = (1-\theta)f^{panel} + \frac{\theta}{2}1 
 \end{equation}
@@ -71,7 +71,7 @@ where $X_i$ is the true population frequency of the SNP $i$ "1" allele.
 
 
 \begin{equation}
-\implies  \hat{X_i} | X_ti \ \sim \ N(X_i, \frac{X_i(1-X_i)}{n_i})
+\implies  \hat{X_i} | X_i \ \sim \ N(X_i, \frac{X_i(1-X_i)}{n_i})
 \end{equation}
 where $\hat{X_i} = \frac{n_i^1}{n_i}$ \\
 \\
@@ -92,12 +92,12 @@ where $\epsilon_i = \frac{y^{obs}_i (1-y^{obs}_i)}{n}$ and $n$ is the total cove
 \\
 In the distribution of $\vec{y}$, we assumed that the panel and study individuals are from the sample population, and the parameters $\theta$ and $\rho$ are estimated without error. Deviations from these assumptions will cause over-dispersion: the true allele frequencies will lie further from their expected values than the model predicts. To allow this, we modify equation \ref{eq:prior} by introducing an over-dispersion parameter $\sigma^2$.
 \begin{equation}
-\vec{y^{true}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma})
+\vec{y^{true}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma})
 \end{equation}
 
 Combining both equations, we obtain,
 \begin{equation}
- \vec{y^{obs}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
+ \vec{y^{obs}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
 where we can estimate $\sigma^2$ by maximum likelihood.
 
