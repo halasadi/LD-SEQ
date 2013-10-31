@@ -26,7 +26,7 @@ Let $E[y_{i}] = \mu_{i}$ and the frequency of the test SNP be $y_{t}$ . As in (W
 \begin{equation}
 \vec{y} \sim N_p(\mu, \Sigma) \label{eq:prior}
 \end{equation}
-where $\mu$ and $\Sigma$ is calculated from a reference panel consisting of $2m$ haplotypes and $p$ SNPs. (Wen \& Stephens, 2010) derived the estimates for $\mu$ and $\Sigma$ from the haplotype copying model presented in (Li \$ Stephens, 2003).
+where $\mu$ and $\Sigma$ is calculated from a reference panel consisting of $2m$ haplotypes and $p$ SNPs. (Wen \& Stephens, 2010) derived the estimates for $\mu$ and $\Sigma$ from the haplotype copying model presented in (Li \& Stephens, 2003).
 \begin{equation}
 \hat{\mu} = (1-\theta)f^{panel} + \frac{\theta}{2}1 
 \end{equation}
@@ -62,43 +62,55 @@ and
 \end{align*}
 \fi
 
-\subsection{Data at the test SNP}
-Let $(n_t^0, n_t^1)$ denote the counts of "0" and "1" alleles at SNP $t$ and $n_t = n_t^0 + n_t^1$. Then 
+\subsection{Data at SNP $i$}
+Let $(n_i^0, n_i^1)$ denote the counts of "0" and "1" alleles at SNP $i$ and $n_i = n_i^0 + n_i^1$. Then 
 \begin{align*}
-n_t^1 \sim Bin(n_t, X_t) \ \dot{\sim}  \ N(n_tX_t, n_tX_t(1-X_t)) \label{eq:napprox}
+n_i^1 \sim Bin(n_i, X_i) \ \dot{\sim}  \ N(n_iX_i, n_iX_i(1-X_i)) \label{eq:napprox}
 \end{align*}
-where $X_t$ is the true population frequency of the SNP $t$ "1" allele. 
+where $X_i$ is the true population frequency of the SNP $i$ "1" allele. 
+
+
 \begin{equation}
-\implies \frac{n_t^1}{n_t} | X_j \ \dot{\sim} \ N(X_t, \frac{\hat{X_t}}{\hat{X_t}(1-\hat{X_t})}) \label{prior}
+\implies  \hat{X_i} | X_ti \ \sim \ N(X_i, \frac{X_i(1-X_i)}{n_i})
 \end{equation}
-where $\hat{X_t} = \frac{n_t^1}{n_t}$.
+where $\hat{X_i} = \frac{n_i^1}{n_i}$ \\
+\\
+Next we replace $X_i$ by $\hat{X_i}$ in the variance for tractibility issues. Therefore,
 
-
-\subsection{Measurement Error and Dispersion}
-
-We incorporate measurement error by introducing a single parameter (as in Wen \& Stephens) $\epsilon^2$ and assume
 \begin{equation}
-\vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \epsilon^2I)
+\hat{X_i} | X_i \ \dot{\sim} \ N(X_i, \frac{\hat{X_i}(1-\hat{X_i})}{n_i}) \label{bin}
 \end{equation}
-In the distribution of $\vec{y}$, we assumed that the panel and study individuals are from the sample population, and the parameters $\theta$ and $\rho$ are estimated without error. Deviations from these assumptions will cause over-dispersion: the true allele frequencies will lie further from their expected values than the model predicts. To allow this, we modify equation \ref{eq:prior} by introducing an over-dispersion paramters $\sigma^2$.
+
+
+\subsection{Incorporating Dispersion}
+
+Letting $y^{obs}_i = \hat{X_i}$ from equation \ref{bin}, we see that
+\begin{equation}
+\vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
+\end{equation}
+where $\epsilon_i = \frac{y^{obs}_i (1-y^{obs}_i)}{n}$ and $n$ is the total coverage for SNP $i$ \\
+\\
+In the distribution of $\vec{y}$, we assumed that the panel and study individuals are from the sample population, and the parameters $\theta$ and $\rho$ are estimated without error. Deviations from these assumptions will cause over-dispersion: the true allele frequencies will lie further from their expected values than the model predicts. To allow this, we modify equation \ref{eq:prior} by introducing an over-dispersion parameter $\sigma^2$.
 \begin{equation}
 \vec{y^{true}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma})
 \end{equation}
 
 Combining both equations, we obtain,
 \begin{equation}
- \vec{y^{obs}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + \epsilon^2I)
+ \vec{y^{obs}} \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
-where we can estimate $\sigma^2$ and $\epsilon^2$ by maximum likelihood.
+where we can estimate $\sigma^2$ by maximum likelihood.
 
 We use Bayes theorem to obtain the distribution for the true frequencies conditional on the observed data (as derived in Wen \& Stephens).
 \begin{align*}
 P(\vec{y^{true}} | \vec{y^{obs}}) = \frac{P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}})}{P(\vec{y^{obs}})} 
 \end{align*}
+
+\iffalse
 \begin{equation}
 \sim N_p\Big((\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}(\frac{\hat{\Sigma}^{-1}\hat{\mu}}{\sigma^2} + \frac{\vec{y^{obs}}}{\epsilon^2}), (\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}\Big)\label{likl}
 \end{equation}
-
+\fi
 \subsection{Estimating the true frequency at SNP t}
 ....
 %We can calculate the likelihood for the frequency at SNP $j$ using Bayes theorem
@@ -108,22 +120,22 @@ P(\vec{y^{true}} | \vec{y^{obs}}) = \frac{P(\vec{y^{obs}} | \vec{y^{true}}) P(\v
 %Why do we maximize the likelihood, don't we already have the best case (i.e. eqn \ref{likl})?
 
 \section{Phase II - estimating $\beta$}
-We can estimate the frequency of the test SNP in group $j$. Let the frequency of the test SNP in group $j$ and replicate $k$ be $f_{j,k}$. We can fit the following model for all groups $j$:
+Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
 
+\begin{equation}
+log(\frac{1-f_{i,k,j}}{f_{i,k,j}}) = \mu_j + \beta_j g_i + \epsilon
+\end{equation}
+
+where $\epsilon \sim N_(0, \sigma_d^2)$, $\sigma_d^2$ is the variance due to drift, $\mu_j$ is the frequency of the $j$the SNP in the founding population and 
 \[
-\left(\begin{array}{c}
-log(\frac{1-f_{j,1}}{f_{j,1}}) \\
-\vdots \\
-log(\frac{1-f_{j,n}}{f_{j,n}})
-\end{array}\right)
-= \beta_j
-\left(\begin{array}{c}
-log(\frac{1-f^A}{f^A}) \\
-\vdots \\
-log(\frac{1-f^A}{f^A})
-\end{array}\right) + \vec{\epsilon_j}
+   g_{i} = \left\{
+     \begin{array}{lr}
+       -1 &  i =0\\
+        0 &  i =1 \\
+        1 &  i =2
+     \end{array}
+   \right.
 \]
 
-where $\vec{\epsilon_j} \sim N_n(0, \sigma_{d}^2I)$, $\sigma_d^2$ is the variance due to drift and $f_A$ is the frequency of the test SNP in the founding population.
-
+The intuition here is that sites with large $\beta$ coefficients are under selection.
 \end{document}
