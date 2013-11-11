@@ -5,20 +5,22 @@
 \usepackage{amssymb}
 \title{LDSP- Linear Detection of Selection in Pooled sequence data}
 \date{}
+\setlength\parindent{0pt}
 \author{Matthew Stephens \& Hussein Al-Asadi}
 \begin{document}
 \maketitle
 \section{Introduction}
 We break up the process into two phases.
 
-\textbf{Phase I}:
+\textbf{Phase I - better estimate frequency using haplotypic information}:
 The Intuition is that data at each SNP are binomial counts, which help estimate the frequency of a SNP in a pool, but they don't
 tell you the frequency exactly, they are noisy. But by combining information across multiple corrected SNPs, you can improve the estimated frequency of the test SNP
 
-\textbf{Phase II}:
-After we estimate the frequency of the putatively selected SNP in each replicate population, we estimate the group effect using a linear model which also allows us to model genetic drift with a normal error term.. The idea is that in the positively selected population, the group effect will be positive while negative in the negatively selected population, and 0 in the neutrally evolving population.
+\textbf{Phase II - detect selection using improved frequency estimate}:
+To detect selection, we find sites that have had significant changes in their frequency compared to the founding population. We can do this by using a linear model which also allows us to model genetic drift with a normal error term.
 
 \section{Phase I}
+\subsection{Prior from Li \& Stephens}
 Consider one lineage for now.
 
 Let  $y = (y_1, y_2, ..., y_p)'$ denote the vector of allele frequencies in the study sample.
@@ -65,59 +67,65 @@ and
 \subsection{Data at SNP $i$}
 Let $(n_i^0, n_i^1)$ denote the counts of "0" and "1" alleles at SNP $i$ and $n_i = n_i^0 + n_i^1$. Then 
 \begin{align*}
-n_i^1 \sim Bin(n_i, X_i) \ \dot{\sim}  \ N(n_iX_i, n_iX_i(1-X_i)) \label{eq:napprox}
+n_i^1 \sim Bin(n_i, y_i) \ \dot{\sim}  \ N(n_iy_i, n_iy_i(1-y_i)) \label{eq:napprox}
 \end{align*}
-where $X_i$ is the true population frequency of the SNP $i$ "1" allele. 
+where $y_i$ is the true population frequency of the SNP $i$ "1" allele. 
 
 
 \begin{equation}
-\implies  \hat{X_i} | X_i \ \sim \ N(X_i, \frac{X_i(1-X_i)}{n_i})
+\implies  \hat{y_i} | y_i \ \sim \ N(y_i, \frac{y_i(1-y_i)}{n_i})
 \end{equation}
-where $\hat{X_i} = \frac{n_i^1}{n_i}$ \\
+where $\hat{y_i} = \frac{n_i^1}{n_i}$ \\
 \\
-Next we replace $X_i$ by $\hat{X_i}$ in the variance for tractibility issues. Therefore,
+Next we replace $y_i$ by $\hat{y_i}$ in the variance for tractibility issues. Therefore,
 
 \begin{equation}
-\hat{X_i} | X_i \ \dot{\sim} \ N(X_i, \frac{\hat{X_i}(1-\hat{X_i})}{n_i}) \label{bin}
+\hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
 \end{equation}
 
-
-\subsection{Incorporating Dispersion}
-
-Letting $y^{obs}_i = \hat{X_i}$ from equation \ref{bin}, we see that
+Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,  we see that (don't we assume independence here?)
 \begin{equation}
 \vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
-where $\epsilon_i = \frac{y^{obs}_i (1-y^{obs}_i)}{n}$ and $n$ is the total coverage for SNP $i$ \\
-\\
+where $\epsilon_i = \frac{y^{obs}_i (1-y^{obs}_i)}{n_i}$ 
+
+\subsection{Incorporating Dispersion}
 In the distribution of $\vec{y}$, we assumed that the panel and study individuals are from the sample population, and the parameters $\theta$ and $\rho$ are estimated without error. Deviations from these assumptions will cause over-dispersion: the true allele frequencies will lie further from their expected values than the model predicts. To allow this, we modify equation \ref{eq:prior} by introducing an over-dispersion parameter $\sigma^2$.
 \begin{equation}
 \vec{y^{true}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma})
 \end{equation}
 
-Combining both equations, we obtain,
+We estimate $\sigma^2$ by maximizing the multivariate normal likelihood:
 \begin{equation}
  \vec{y^{obs}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
-where we can estimate $\sigma^2$ by maximum likelihood.
 
-We use Bayes theorem to obtain the distribution for the true frequencies conditional on the observed data (as derived in Wen \& Stephens).
+We use Bayes theorem to obtain the distribution for the true frequencies conditional on the observed data.
 \begin{align*}
-P(\vec{y^{true}} | \vec{y^{obs}}) = \frac{P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}})}{P(\vec{y^{obs}})} 
+P(\vec{y^{true}} | \vec{y^{obs}}, M) \propto P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}}|M)
 \end{align*}
+
+Let
+\begin{equation}
+\bar{\Sigma} = \big(\frac{\hat{\Sigma}^{-1}}{\sigma^2} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p})\big)^{-1}
+\end{equation}
+and,
+\begin{equation}
+\bar{\theta} = (\frac{\hat{\Sigma}^{-1}}{\sigma^2}\hat{\mu} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p}) \ \vec{y^{obs}}) \ \bar{\Sigma}
+\end{equation}
+Then,
+
+\begin{equation}
+\vec{y^{true}} | \vec{y^{obs}}, M \sim N_p(\bar{\theta}, \bar{\Sigma})
+\end{equation}
+Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
+
 
 \iffalse
 \begin{equation}
 \sim N_p\Big((\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}(\frac{\hat{\Sigma}^{-1}\hat{\mu}}{\sigma^2} + \frac{\vec{y^{obs}}}{\epsilon^2}), (\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}\Big)\label{likl}
 \end{equation}
 \fi
-\subsection{Estimating the true frequency at SNP t}
-....
-%We can calculate the likelihood for the frequency at SNP $j$ using Bayes theorem
-%\begin{equation}
-%L(f_{i,k,j}^{true} | \vec{f_{i,k}^{obs}}) = P(\vec{f_{i,k}^{obs}} | f_{i,k,j}^{true}) = %\frac{P(f_{i,k,j}^{true}|\vec{f_{i,k}^{obs}}) P(\vec{f_{i,k}^{obs}})} {P(f_{i,k,j}^{true})} 
-%\end{equation}
-%Why do we maximize the likelihood, don't we already have the best case (i.e. eqn \ref{likl})?
 
 \section{Phase II - estimating $\beta$}
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
