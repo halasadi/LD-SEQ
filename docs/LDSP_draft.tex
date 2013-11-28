@@ -83,7 +83,7 @@ Next we replace $y_i$ by $\hat{y_i}$ in the variance for tractibility issues. Th
 \hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
 \end{equation}
 
-Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,  we see that (don't we assume independence here?)
+Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,  we see that (we don't have to assume independence here because the observed frequency are conditionally independent with each other given the true frequency, check with Matthew)
 \begin{equation}
 \vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
@@ -100,7 +100,7 @@ We estimate $\sigma^2$ by maximizing the multivariate normal likelihood:
  \vec{y^{obs}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
 
-We use Bayes theorem to obtain the distribution for the true frequencies conditional on the observed data.
+To obtain the distribution for the true frequencies conditional on the observed data, we use Bayes theorem 
 \begin{align*}
 P(\vec{y^{true}} | \vec{y^{obs}}, M) \propto P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}}|M)
 \end{align*}
@@ -111,21 +111,14 @@ Let
 \end{equation}
 and,
 \begin{equation}
-\bar{\theta} = (\frac{\hat{\Sigma}^{-1}}{\sigma^2}\hat{\mu} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p}) \ \vec{y^{obs}}) \ \bar{\Sigma}
+\bar{\theta} = \bar{\Sigma} \ (\frac{\hat{\Sigma}^{-1}}{\sigma^2}\hat{\mu} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p}) \ \vec{y^{obs}})
 \end{equation}
-Then,
+Then since the normal is in the conjugate family,
 
 \begin{equation}
 \vec{y^{true}} | \vec{y^{obs}}, M \sim N_p(\bar{\theta}, \bar{\Sigma})
 \end{equation}
 Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
-
-
-\iffalse
-\begin{equation}
-\sim N_p\Big((\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}(\frac{\hat{\Sigma}^{-1}\hat{\mu}}{\sigma^2} + \frac{\vec{y^{obs}}}{\epsilon^2}), (\frac{\hat{\Sigma}^{-1}}{\sigma^2} + \frac{I}{\epsilon^2})^{-1}\Big)\label{likl}
-\end{equation}
-\fi
 
 \section{Phase II - estimating $\beta$}
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
@@ -134,7 +127,7 @@ Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and repl
 log(\frac{1-f_{i,k,j}}{f_{i,k,j}}) = \mu_j + \beta_{j} g_i + \epsilon
 \end{equation}
 
-where $\epsilon \sim N_(0, \sigma_d^2)$, $\sigma_d^2$ is the variance due to drift, $\mu_j$ is the frequency of the $j$the SNP in the founding population and 
+where $\epsilon \sim N_(0, \sigma_d^2)$, $\sigma_d^2$ is the variance due to drift, $\mu_j$ is the frequency of the $j$th SNP in the founding population and 
 \[
    g_{i} = \left\{
      \begin{array}{lr}
