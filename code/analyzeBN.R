@@ -110,14 +110,18 @@ Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
 Sigma[Sigma < 1e-8] = 0
 
 
-d = diag(1/epsilon)
-Sigma_i = solve(Sigma)
+d = diag(1/epsilon) # there is a problem here, often epsilons are 0
+Sigma_i = solve(Sigma) # there is also a problems, when nloci is big, kappa(Sigma) is very large (1e36)
 
 Sigma_bar = solve(Sigma_i + d)
 theta_bar = Sigma_bar%*%(Sigma_i%*%mu + d%*%y_obs)
 true_freq = colMeans(haps)
-plot(abs(true_freq-theta_bar), abs(true_freq-y_obs), xlab = expression(paste("|", f_(true), "=", f_(estimate), "|")), ylab = expression(paste("|", f_(true), "=", f_(yobs), "|")))
+error_est = abs(true_freq-theta_bar)
+error_obs = abs(true_freq-y_obs)
+plot(error_est, error_obs, xlab = expression(paste("|", f_(true), "-", f_(estimate), "|")), ylab = expression(paste("|", f_(true), "-", y_obs, "|")))
 lines(abs(true_freq-theta_bar), abs(true_freq-theta_bar))
+plot(true_freq, error_est/error_obs, xlab = "true frequency", ylab ="error ratio (< 1 method does better)")
+abline(h = mean(error_est/error_obs), col = "red")
 
 
 
