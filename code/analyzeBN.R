@@ -1,12 +1,12 @@
 ## call ms ##
-mutation_rate = 1e-6
+mutation_rate = 1e-5
 popsize = 1e6
 theta = 4*mutation_rate*popsize
 nsamp = 100
 r = 1e-8
 nsites = 1e4
 rho =  4 * popsize * r
-mscall <- paste( "~/bin/msdir/ms", nsamp, 1, "-t", theta, "-r", rho*(nsites-1), nsites, "| sed '1,5d' > msout") 
+mscall <- paste( "../bin/msdir/ms", nsamp, 1, "-t", theta, "-r", rho*(nsites-1), nsites, "| sed '1,5d' > msout") 
 system(mscall) # avoid this for relatively high recombination rate, will make R freeze
 
 ## read ms input ##
@@ -17,6 +17,7 @@ pos[1] = NULL
 pos = floor(pos*nsites)
 # read in haplotypes
 raw_haps = system("cat msout | sed '1,1d'", intern=TRUE)
+
 
 ## format ms output ##
 nloci = nchar(raw_haps[1])
@@ -38,31 +39,7 @@ n = rep(0, nloci)
 for (i in 1:nloci){
   n[i] = rpois(1, lambda)
   sampled = sample(haps[,i], n)
-  y_obs[i] = mean(sampled)
-}
-
-
-
-# this part is tricky
-# delete information about SNPs that have a pooled frequency of 0
-y_temp = y_obs
-pos_temp = pos
-n_temp = n
-haps_temp = haps
-
-pos = n = y_obs = vector()
-haps = NULL
-
-cnt = 1
-tol = 1e-6
-for (i in 1:nloci){
-  if (y_temp[i] > tol){
-    y_obs[cnt] = y_temp[i]
-    pos[cnt] = pos_temp[i]
-    n[cnt] = n_temp[i]
-    haps = cbind(haps, haps_temp[,i])
-    cnt = cnt + 1
-  }
+  y_obs[i] = (sum(sampled) + 0.5)/(length(sampled) + 1)
 }
 
 
@@ -85,7 +62,7 @@ for (i in 1:(nsamp-1)){
 }
 geo_sum = (1/geo_sum)
 theta = geo_sum/(nsamp + geo_sum)
-
+theta = 0.00000000001
 mu = (1-theta)*colMeans(haps) + I(theta/2)
 cov_panel = cov(haps)
 
@@ -107,21 +84,19 @@ for (i in 1:nloci){
 }
 
 Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
-Sigma[Sigma < 1e-8] = 0
+Sigma[abs(Sigma) < 1e-8] = 0
 
 
-d = diag(1/epsilon) # there is a problem here, often epsilons are 0
-Sigma_i = solve(Sigma) # there is also a problems, when nloci is big, kappa(Sigma) is very large (1e36)
+d = diag(1/epsilon)
+Sigma_i = solve(Sigma) # there is a problem, when nloci is big, kappa(Sigma) is very large (1e36)
 
 Sigma_bar = solve(Sigma_i + d)
-theta_bar = Sigma_bar%*%(Sigma_i%*%mu + d%*%y_obs)
+theta_bar = as.vector(Sigma_bar%*%(Sigma_i%*%mu + d%*%y_obs))
 true_freq = colMeans(haps)
 error_est = abs(true_freq-theta_bar)
 error_obs = abs(true_freq-y_obs)
-plot(error_est, error_obs, xlab = expression(paste("|", f_(true), "-", f_(estimate), "|")), ylab = expression(paste("|", f_(true), "-", y_obs, "|")))
-lines(abs(true_freq-theta_bar), abs(true_freq-theta_bar))
-plot(true_freq, error_est/error_obs, xlab = "true frequency", ylab ="error ratio (< 1 method does better)")
-abline(h = mean(error_est/error_obs), col = "red")
-
-
-
+plot(abs(true_freq-theta_bar), abs(true_freq-theta_bar), xlab = expression(paste("|", f_(true), "-", f_(estimate), "|")), 
+     ylab = expression(paste("|", f_(true), "-", y_obs, "|")), type = "l")
+points(error_est, error_obs)
+plot(true_freq, log(error_est/error_obs), xlab = "true frequency", ylab ="log error ratio (< 0 method does better)")
+abline(h = mean(log(error_est/error_obs)), col = "red")
