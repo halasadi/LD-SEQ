@@ -83,18 +83,21 @@ where $y_i$ is the true population frequency of the SNP $i$ "1" allele.
 
 
 \begin{equation}
-\implies  \hat{y_i} | y_i \ \sim \ N(y_i, \frac{y_i(1-y_i)}{n_i})
+\implies \hat{y_i} | y_i \ \sim \ N(y_i, \frac{y_i(1-y_i)}{n_i})
 \end{equation}
-where $\hat{y_i} = \frac{n_i^1}{n_i}$ \\
-\\
+where $\hat{y_i} = \frac{n_i^1}{n_i}$\\
 Next we replace $y_i$ by $\hat{y_i}$ in the variance for tractibility issues. Therefore,
-
 \begin{equation}
-\hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
+ \hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
 \end{equation}
 
-PUT HERE THE BETA DISTRIBUTION PART
-Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,
+But, if the coverage is low, then the estimate the frequency of a SNP can be 0 (i.e. $\frac{n_i^1}{n_i}=0$). We make the following modification which has a Bayesian justisfication of assuming a prior of $Beta(\frac{1}{2},\frac{1}{2})$.
+\begin{equation}
+y^{obs}_i = \frac{n_i^1 + \frac{1}{2}}{n_i + 1}
+\end{equation}
+
+
+Letting $y^{true}_i = y_i$,
 \begin{equation}
 \vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
@@ -117,7 +120,7 @@ P(\vec{y^{true}} | \vec{y^{obs}}, M) \propto P(\vec{y^{obs}} | \vec{y^{true}}) P
 \end{align*}
 
 Let
-\begin{equation}
+\begin{equation} \label{barsigma}
 \bar{\Sigma} = \big(\frac{\hat{\Sigma}^{-1}}{\sigma^2} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p})\big)^{-1}
 \end{equation}
 and,
@@ -131,7 +134,21 @@ Then since the normal is in the conjugate family,
 \end{equation}
 Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
 
-\subsection{Calculating the inverse of the covariance matrix when it is ill-conditioned}
+\subsection{Calculating the inverse of the covariance matrix}
+When $\hat{\Sigma}$ is singular, we decompose using SVF and calculate the pseudo-inverse,
+\begin{equation}
+\hat{\Sigma} = U 
+\begin{bmatrix} S & 0 \\ 0 & 0 \end{bmatrix} V^T
+\end{equation}
+where the pseudo-inverse is,
+\begin{equation}
+\hat{\Sigma}^{+} = V \begin{bmatrix} S^-1 & 0 \\ 0 & 0 \end{bmatrix} U^T
+\end{equation}
+We modify \ref{barsigma} which is now probably non-singular??
+\begin{equation}
+\bar{\Sigma} =  \big(\frac{\hat{\Sigma}^{+}}{\sigma^2} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p})\big)^{-1}
+\end{equation}
+
 
 \section{Phase II - estimating $\beta$}
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
