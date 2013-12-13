@@ -6,15 +6,23 @@
 \title{LDSP- Linear Detection of Selection in Pooled sequence data}
 \date{}
 \setlength\parindent{0pt}
-\author{Matthew Stephens \& Hussein Al-Asadi}
+\author{Stephens Lab}
 \begin{document}
 \maketitle
 \section{Introduction}
-We break up the process into two phases.
-
 \textbf{Phase I - better estimate frequency using haplotypic information}:
-The Intuition is that data at each SNP are binomial counts, which help estimate the frequency of a SNP in a pool, but they don't
-tell you the frequency exactly, they are noisy. But by combining information across multiple corrected SNPs, you can improve the estimated frequency of the test SNP
+The Intuition is that data at each SNP are binomial counts, which help estimate the frequency of a SNP in a pool. But by combining information across multiple corrected SNPs, you can improve the estimated frequency of the test SNP. \\
+
+We demonstrate the feasibility of such an endeavor by a simple probability calculation:\\
+
+Assume, the objective is to estimate the frequency of SNP $t$ in the pool of haplotypes. Consider another SNP $i$ (which we denote as $S_i$). For illustrative purposes, we suppose the two SNPS are perfectly correlated (e.g. $P(S_1 = 1, S_2 = 1) = 1 \ \& \ P(S_1 = 0, S_2 = 0) = 1$) \\
+
+\textit{one estimate}: $P(S_t = 1) = \frac{n_1^1}{n_1}$ \\
+\textit{second estimate}:  $P(S_t = 1) = P(S_t = 1 | S_i = 0)P(S_i=0) + P(S_t = 1 | S_i = 1)P(S_i=1) = P(S_t = 1 | S_i = 1)P(S_i = 1) = P(S_i = 1) = \frac{n_2^1}{n_2}$ \\
+
+where $n_j^1$ is the number of "1" allele reads at SNP $j$ and $n_j^0$ is the number of "0" allele reads at SNP $j$ and $n_j = n_j^1 + n_j^0$. \\
+
+Therefore, effectively we have doubled our coverage. If instead of only one perfectly correlated SNP, we have a 1000 then sequencing only at 1x coverage will be like sequencing at 1000x coverage! \\
 
 \textbf{Phase II - detect selection using improved frequency estimate}:
 To detect selection, we find sites that have had significant changes in their frequency compared to the founding population. We can do this by using a linear model which also allows us to model genetic drift with a normal error term.
@@ -44,6 +52,8 @@ and $S$ is obtained from $\Sigma^{panel}$, specifically,
      \end{array}
    \right.
 \end{equation} 
+$\rho_{i,j} = -4Nc_{i,j}d_{i,j}$ where $d_{i,j}$ is the physical distance between markers $i$ and $j$, $N$ is the effective diploid population size, $c_{i,j}$ is the average rate of crossover per unit physical distance, per meiosis, between sites $i$ and $j$ (so that $c_{i,j}d_{i,j}$ is the genetic distance between sites $i$ and $j$). 
+
 and,
 \begin{equation}
 \theta = \frac{(\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}{2m + (\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}
@@ -83,7 +93,8 @@ Next we replace $y_i$ by $\hat{y_i}$ in the variance for tractibility issues. Th
 \hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
 \end{equation}
 
-Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,  we see that (we don't have to assume independence here because the observed frequency are conditionally independent with each other given the true frequency, check with Matthew)
+PUT HERE THE BETA DISTRIBUTION PART
+Letting $y^{true}_i = y_i$ and $y^{obs}_i = \hat{y_i}$,
 \begin{equation}
 \vec{y^{obs}} | \vec{y^{true}} \sim N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
@@ -119,6 +130,8 @@ Then since the normal is in the conjugate family,
 \vec{y^{true}} | \vec{y^{obs}}, M \sim N_p(\bar{\theta}, \bar{\Sigma})
 \end{equation}
 Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
+
+\subsection{Calculating the inverse of the covariance matrix when it is ill-conditioned}
 
 \section{Phase II - estimating $\beta$}
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
