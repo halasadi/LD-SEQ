@@ -9,12 +9,12 @@ create_haps <- function(nsamp=100, nloci){
     haps[i,2] = 0
   }
   for (i in 26:50){
-    haps[i,1] = 1
+    haps[i,1] = 0
     haps[i,2] = 0
   }
   for (i in 51:75){
     haps[i,1] = 1
-    haps[i,2] = 0
+    haps[i,2] = 1
   }
   for (i in 76:100){
     haps[i,1] = 0
