@@ -9,12 +9,12 @@ create_haps <- function(nsamp=100, nloci){
     haps[i,2] = 0
   }
   for (i in 26:50){
-    haps[i,1] = 0
+    haps[i,1] = 1
     haps[i,2] = 0
   }
   for (i in 51:75){
     haps[i,1] = 1
-    haps[i,2] = 1
+    haps[i,2] = 0
   }
   for (i in 76:100){
     haps[i,1] = 0
@@ -92,8 +92,8 @@ perform_estimate <- function(y_obs, nloci, nsamp, haps, pos){
   return(as.vector(theta_bar))
 }
 
-sumsq <- function(x){
-  return(sum(abs(x)))
+mse <- function(y_hat, y){
+  return(sum((y_hat-y)^2)/length(y))
 }
 
 nsamp = 100
@@ -102,18 +102,19 @@ haps = create_haps(nsamp, nloci)
 pos = c(50, 100)
 
 nreps = 1000
-lambdas = seq(5, 100, by = 5)
+lambdas = seq(5, 60, by = 5)
 l = length(lambdas)
 
-m_error_est = rep(0, l)
-m_error_opt = rep(0, l)
-m_error_obs  = rep(0, l)
+mse_est = rep(0, l)
+mse_opt = rep(0, l)
+mse_obs  = rep(0, l)
 
 
 for (ii in 1:l){
-  temp_est = rep(0, nreps)
-  temp_opt = rep(0, nreps)
-  temp_obs = rep(0, nreps)
+  store_ldsp_est = rep(0,nreps)
+  store_opt_est = rep(0, nreps)
+  store_obs_est = rep(0, nreps)
+  store_true_freq = rep(0, nreps)
   for (jj in 1:nreps){
     lambda = lambdas[ii]
     pooled_info =  pool(lambda, haps, nloci, nsamp)
@@ -122,26 +123,23 @@ for (ii in 1:l){
     n_1 = pooled_info[3,]
     est = perform_estimate(y_obs, nloci, nsamp, haps, pos)
     true_freq = colMeans(haps)
-    ## Matthew's suggestion is to do (n_1^1 + n_2^1)/(n_1+n_2), try it!
-    opt_est = vector()
-    opt_est[1] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
-    opt_est[2] = ((n[1]-n_1[1]) + n_1[2])/ (n[1] + n[2])
-    temp_est[jj] = sumsq(est - true_freq)
-    temp_opt[jj] = sumsq(opt_est - true_freq)
-    temp_obs[jj] = sumsq(y_obs - true_freq)
+    store_true_freq[jj] = true_freq[1] # just the first SNP
+    ## Matthew's suggestion is to do (n_1^1 + n_2^1)/(n_1+n_2)
+    store_opt_est[jj] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
+    store_obs_est[jj] = y_obs[1]
+    store_ldsp_est[jj] = est[1]
   }
-  m_error_est[ii] = mean(temp_est)
-  m_error_opt[ii] = mean(temp_opt)
-  m_error_obs[ii] = mean(temp_obs)
+  mse_est[ii] = mse(store_ldsp_est, store_true_freq)
+  mse_opt[ii] = mse(store_opt_est, store_true_freq)
+  mse_obs[ii] = mse(store_obs_est, store_true_freq)
 
-  # calculate variances here
 }
 
 
-plot(lambdas, m_error_est, xlab = "coverage", ylab = "sample mean of sum of LAE", col = "red", ylim = c(0,0.3))
-points(lambdas, m_error_opt, col = "blue")
-points(lambdas, m_error_obs)
-legend("topright", c("read counts only at focal SNP","LDSP", "optimal bound"), lty=c(1,1,1), lwd=c(1,1,1),col=c("black","red", "blue"))
+plot(lambdas, mse_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "estimate of the frequency for SNP 1")
+points(lambdas, mse_opt, col = "blue")
+points(lambdas, mse_obs)
+legend("topright", c("read counts only at focal SNP","LDSP", "using read counts from both SNPs"), lty=c(1,1,1), lwd=c(1,1,1),col=c("black","red", "blue"))
 #legend("topright", c("read counts only at focal SNP","LDSP"), lty=c(1,1), lwd=c(1,1),col=c("black","red"))
 
 ## ratio of coverages
