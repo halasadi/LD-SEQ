@@ -20,6 +20,10 @@ create_haps <- function(nsamp=100, per){
 #global_Sigma = 0
 #lobal_D = 0
 
+
+## THERE IS A PROBLEM HERE
+## sigma2 is estimated to be < 1 (undispersed)
+## Is the loglik function wrong?
 findMLE <- function(obs, mu, Sigma, D){
   #global_obs <<- obs
   #global_mu <<- mu
@@ -64,7 +68,10 @@ pool <- function(lambda, haps, nloci, nsamp){
 }
 
 perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
-  # calculate distance between SNPs
+  
+  # calculate distances between SNPs
+  # for example if two SNPs at position 50 and 100
+  # then d = 50 
   d = rep(0, nloci-1)
   for (i in 1:(nloci-1)){
     d[i] = as.numeric(pos[i+1])-as.numeric(pos[i])
@@ -98,8 +105,13 @@ perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
         S[i,j] = cov_panel[i,j]
       }
       else{
+        # distance between SNPs (e.g. SNP 1 and SNP 10)
         dist = sum(d[min(i,j):(max(i,j)-1)])
-        S[i,j] = exp(-rho*dist/nsamp)*cov_panel[i,j]
+        
+        # hypothetical effective popsize
+        N = 1e4
+        
+        S[i,j] = exp((-4*N*rho*dist)/nsamp)*cov_panel[i,j]
       }
     }
   }
@@ -111,7 +123,8 @@ perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
   d = diag(1/epsilon)
   Sigma_i = solve(Sigma) # there is also a problems, when nloci is big, kappa(Sigma) is very large (1e36)
   
-  sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
+  #sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
+  sigma2 = 3
   
   # this is where the dispersion parameter comes in: eqn 13
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
@@ -125,7 +138,7 @@ mse <- function(y_hat, y){
 
 nsamp = 100
 nloci = 2
-haps = create_haps(nsamp, 0.6)
+haps = create_haps(nsamp, 0.4)
 
 # physical position of the two SNPs
 pos = c(50, 100)
@@ -138,7 +151,7 @@ mse_est = rep(0, l)
 mse_opt = rep(0, l)
 mse_obs  = rep(0, l)
 
-# increase the 1-0 haplotype from 60% to 90%
+# increase the 1-0 haplotype from 40% to 90% (simulate positive selection)
 ev_haps = create_haps(nsamp, 0.9)
 
 for (i in 1:l){
@@ -181,8 +194,6 @@ points(lambdas, mse_obs, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 #legend("topright", c("read counts only at focal SNP","LDSP"), lty=c(1,1), lwd=c(1,1),col=c("black","red"))
 
-# To-DO
-# recheck code 
 # investigate what the dispersion paramter should be optimally
 
-## create a plot where y-axis is percent increased coverage
+# create a plot where y-axis is percent increased coverage
