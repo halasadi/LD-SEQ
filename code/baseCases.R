@@ -1,38 +1,20 @@
-library(mvtnorm)
-
-create_haps <- function(nsamp=100, nloci){
-  haps = matrix(nrow = nsamp, ncol = nloci, 0)
-  for (i in 1:25){
+create_haps <- function(nsamp=100, per){
+  # the only type of haplotypes in the pool are either 1-0 or 0-1 (for simplicity)
+  # per specifies the percent of 1-0 haplotypes  
+  haps = matrix(nrow = nsamp, ncol = 2, 0)
+  no_10_haps = floor(per*nsamp)
+  for (i in 1:no_10_haps){
     haps[i,1] = 1
     haps[i,2] = 0
   }
-  for (i in 26:50){
-    haps[i,1] = 1
-    haps[i,2] = 0
-  }
-  for (i in 51:60){
-    haps[i,1] = 1
-    haps[i,2] = 0
-  }
-  for (i in 61:100){
+  for (i in (no_10_haps+1):nsamp){
     haps[i,1] = 0
     haps[i,2] = 1
   }
   return(haps)
 }
 
-evolve_haps <- function(haps){
-  # increase frequency of haplotype containing "1" allele at SNP 1
-  # e.g. from 60 (1,0) haplotypes to 90 (1,0) haplotypes (a 50% increase in frequency)
-  for (i in 61:90){
-    haps[i,1] = 1
-    haps[i,2] = 0
-  }
-  return(haps)
-}
-
-
-# to debug code
+# global variables to debug code
 #global_obs = 0
 #global_mu = 0
 #global_Sigma = 0
@@ -48,6 +30,7 @@ findMLE <- function(obs, mu, Sigma, D){
     cov_matrix = sigma2*Sigma + D
     sinv = solve(cov_matrix)
     p = length(mu)
+    # equation from Wikipedia
     logl = -0.5*log(det(cov_matrix)) - 0.5*(t(obs-mu)%*%solve(cov_matrix)%*%(obs-mu)) -
       (p/2)*log(2*pi)
     # multiply by -1 since nlm minimizes
@@ -62,19 +45,23 @@ pool <- function(lambda, haps, nloci, nsamp){
   n = rep(0, nloci)
   n_1 = rep(0, nloci)
   for (i in 1:nloci){
+    
+    # coverage
     n[i] = rpois(1, lambda)
-    # make sure it's below the number of sample in the pools
+    
+    # ensure number haps sampled is below the number of samples in the pool
     n[i] = min(n[i], nsamp)
-    # above 1
+    # ensure sample at least 1 haplotype
     n[i] = max(1, n[i])
+    
+    # sample locus i from pool
     sampled = sample(haps[,i], n[i])
+    
+    # number of 1 alleles
     n_1[i] = sum(sampled)
-    y_obs[i] = (n_1[i] + 0.5)/(length(sampled) + 1)
   }
-  return(rbind(n, y_obs, n_1))
+  return(rbind(n, n_1))
 }
-
-# try estimating sigma by ML
 
 perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
   # calculate distance between SNPs
@@ -83,7 +70,6 @@ perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
     d[i] = as.numeric(pos[i+1])-as.numeric(pos[i])
   }
 
-  # there is a problem here where n[i] = 0 for low coverage
   epsilon = rep(0, nloci)
   for (i in 1:nloci){
     epsilon[i] = (y_obs[i]*(1-y_obs[i]))/n[i]
@@ -139,7 +125,9 @@ mse <- function(y_hat, y){
 
 nsamp = 100
 nloci = 2
-haps = create_haps(nsamp, nloci)
+haps = create_haps(nsamp, 0.6)
+
+# physical position of the two SNPs
 pos = c(50, 100)
 
 nreps = 1000
@@ -150,29 +138,39 @@ mse_est = rep(0, l)
 mse_opt = rep(0, l)
 mse_obs  = rep(0, l)
 
-ev_haps = evolve_haps(haps)
+# increase the 1-0 haplotype from 60% to 90%
+ev_haps = create_haps(nsamp, 0.9)
 
-for (ii in 1:l){
+for (i in 1:l){
   store_ldsp_est = rep(0,nreps)
   store_opt_est = rep(0, nreps)
   store_obs_est = rep(0, nreps)
   store_true_freq = rep(0, nreps)
-  for (jj in 1:nreps){
-    lambda = lambdas[ii]
+  
+  for (j in 1:nreps){
+    
+    # pooling
+    lambda = lambdas[i] # coverage
     pooled_info =  pool(lambda, ev_haps, nloci, nsamp)
     n = pooled_info[1,]  # total read counts
-    n_1 = pooled_info[3,] # counts of "1" allele
-    y_obs = pooled_info[2,] # estimate
-    est = perform_estimate(y_obs, nloci, nsamp, haps, pos, n)
+    n_1 = pooled_info[2,] # counts of "1" allele
+    
+    y_obs = (n_1 + 0.5)/(n + 1)
+    ldsp_est = perform_estimate(y_obs, nloci, nsamp, haps, pos, n)
     true_freq = colMeans(ev_haps)
-    store_true_freq[jj] = true_freq[1] # just the first SNP
-    store_opt_est[jj] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
-    store_obs_est[jj] = y_obs[1]
-    store_ldsp_est[jj] = est[1]
+    
+    # only look at the estimates of SNP 1
+    store_true_freq[j] = true_freq[1]
+    store_opt_est[j] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
+    store_obs_est[j] = y_obs[1]
+    #store_obs_est[j] = n_1[1]/n[1]
+    store_ldsp_est[j] = ldsp_est[1]
   }
-  mse_est[ii] = mse(store_ldsp_est, store_true_freq)
-  mse_opt[ii] = mse(store_opt_est, store_true_freq)
-  mse_obs[ii] = mse(store_obs_est, store_true_freq)
+  
+  # calculate MSE
+  mse_est[i] = mse(store_ldsp_est, store_true_freq)
+  mse_opt[i] = mse(store_opt_est, store_true_freq)
+  mse_obs[i] = mse(store_obs_est, store_true_freq)
 
 }
 
@@ -184,10 +182,7 @@ legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"
 #legend("topright", c("read counts only at focal SNP","LDSP"), lty=c(1,1), lwd=c(1,1),col=c("black","red"))
 
 # To-DO
-# recheck code, make sure everything is solid!
-# write evolve haps so you can specify percent increase
-# make code more readable
-# recheck code again
+# recheck code 
 # investigate what the dispersion paramter should be optimally
 
 ## create a plot where y-axis is percent increased coverage
