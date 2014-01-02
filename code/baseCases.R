@@ -14,16 +14,13 @@ create_haps <- function(nsamp=100, per){
   return(haps)
 }
 
-# global variables to debug code
+# global variables are only to debug code
 #global_obs = 0
 #global_mu = 0
 #global_Sigma = 0
 #lobal_D = 0
 
-
-## THERE IS A PROBLEM HERE
-## sigma2 is estimated to be < 1 (undispersed)
-## Is the loglik function wrong?
+# PROBLEM HERE: sigma2 estimated to be < 1
 findMLE <- function(obs, mu, Sigma, D){
   #global_obs <<- obs
   #global_mu <<- mu
@@ -33,13 +30,12 @@ findMLE <- function(obs, mu, Sigma, D){
   ll <- function(sigma2){
     cov_matrix = sigma2*Sigma + D
     sinv = solve(cov_matrix)
-    p = length(mu)
-    # equation from Wikipedia
-    logl = -0.5*log(det(cov_matrix)) - 0.5*(t(obs-mu)%*%solve(cov_matrix)%*%(obs-mu)) -
-      (p/2)*log(2*pi)
-    # multiply by -1 since nlm minimizes
-    return(as.numeric(-logl))
+    # equation from handout (agrees with Wikipedia)
+    logl = log(det(cov_matrix)) + (t(obs-mu)%*%sinv%*%(obs-mu))
+    return(as.numeric(logl))
   }
+  
+  # note: optim actually minimizes
   return(optim(ll, par = 1, method = "L-BFGS-B", lower = 0.1, upper = 10)$par)
 }
 
@@ -67,7 +63,7 @@ pool <- function(lambda, haps, nloci, nsamp){
   return(rbind(n, n_1))
 }
 
-perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
+perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   
   # calculate distances between SNPs
   # for example if two SNPs at position 50 and 100
@@ -118,15 +114,13 @@ perform_estimate <- function(y_obs, nloci, nsamp, haps, pos, n){
 
   Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
   Sigma[abs(Sigma) < 1e-8] = 0
-
-
-  d = diag(1/epsilon)
-  Sigma_i = solve(Sigma) # there is also a problems, when nloci is big, kappa(Sigma) is very large (1e36)
   
-  #sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
-  sigma2 = 3
+  sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
+  print(sigma2)
   
   # this is where the dispersion parameter comes in: eqn 13
+  d = diag(1/epsilon)
+  Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
   theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
   return(as.vector(theta_bar))
@@ -136,14 +130,17 @@ mse <- function(y_hat, y){
   return(sum((y_hat-y)^2)/length(y))
 }
 
-nsamp = 100
 nloci = 2
-haps = create_haps(nsamp, 0.4)
-
 # physical position of the two SNPs
 pos = c(50, 100)
 
-nreps = 1000
+# starting population
+nsamp = 100
+haps = create_haps(nsamp, 0.4)
+
+# increase the 1-0 haplotype from 40% to 90% (simulate positive selection)
+ev_haps = create_haps(nsamp, 0.9)
+
 lambdas = seq(5, 50, by = 5)
 l = length(lambdas)
 
@@ -151,8 +148,7 @@ mse_est = rep(0, l)
 mse_opt = rep(0, l)
 mse_obs  = rep(0, l)
 
-# increase the 1-0 haplotype from 40% to 90% (simulate positive selection)
-ev_haps = create_haps(nsamp, 0.9)
+nreps = 1000
 
 for (i in 1:l){
   store_ldsp_est = rep(0,nreps)
@@ -168,8 +164,12 @@ for (i in 1:l){
     n = pooled_info[1,]  # total read counts
     n_1 = pooled_info[2,] # counts of "1" allele
     
+    # psedu-counts
     y_obs = (n_1 + 0.5)/(n + 1)
-    ldsp_est = perform_estimate(y_obs, nloci, nsamp, haps, pos, n)
+    
+    ldsp_est = perform_LDSP(y_obs, nloci, nsamp, haps, pos, n)
+    
+    # true pool freqency
     true_freq = colMeans(ev_haps)
     
     # only look at the estimates of SNP 1
@@ -188,12 +188,10 @@ for (i in 1:l){
 }
 
 
-plot(lambdas, mse_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "frequency estimate for SNP 1", lwd=1.5)
+plot(lambdas, mse_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "estimate of SNP 1 frequency", lwd=1.5)
 points(lambdas, mse_opt, col = "blue", lwd=1.5)
 points(lambdas, mse_obs, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 #legend("topright", c("read counts only at focal SNP","LDSP"), lty=c(1,1), lwd=c(1,1),col=c("black","red"))
-
-# investigate what the dispersion paramter should be optimally
 
 # create a plot where y-axis is percent increased coverage
