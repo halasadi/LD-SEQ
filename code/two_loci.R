@@ -1,6 +1,6 @@
 create_haps <- function(nsamp=100, per){
   # the only type of haplotypes in the pool are either 1-0 or 0-1 (for simplicity)
-  # per specifies the percent of 1-0 haplotypes  
+  # "per" specifies the percent of 1-0 haplotypes  
   haps = matrix(nrow = nsamp, ncol = 2, 0)
   no_10_haps = floor(per*nsamp)
   for (i in 1:no_10_haps){
@@ -14,29 +14,22 @@ create_haps <- function(nsamp=100, per){
   return(haps)
 }
 
-# global variables are only to debug code
-#global_obs = 0
-#global_mu = 0
-#global_Sigma = 0
-#lobal_D = 0
 
-# PROBLEM HERE: sigma2 estimated to be < 1
+# potential problem: sigma2 estimated to be < 1 (and even <0 in some cases)
 findMLE <- function(obs, mu, Sigma, D){
-  #global_obs <<- obs
-  #global_mu <<- mu
-  #global_Sigma <<- Sigma
-  #global_D <<- D
   
   ll <- function(sigma2){
-    cov_matrix = sigma2*Sigma + D
-    sinv = solve(cov_matrix)
-    # equation from handout (agrees with Wikipedia)
-    logl = log(det(cov_matrix)) + (t(obs-mu)%*%sinv%*%(obs-mu))
+    cov_m = sigma2*Sigma + D
+    sinv = solve(cov_m)
+    
+    # (from hand-out and verified with Wikipedia)
+    logl = log(det(cov_m)) + (t(obs-mu)%*%sinv%*%(obs-mu))
+    
     return(as.numeric(logl))
   }
   
   # note: optim actually minimizes
-  return(optim(ll, par = 1, method = "L-BFGS-B", lower = 0.1, upper = 10)$par)
+  return(optim(ll, par = 1, method = "L-BFGS-B", lower = 1, upper = 10)$par)
 }
 
 pool <- function(lambda, haps, nloci, nsamp){
@@ -88,8 +81,10 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
 
   mu = (1-theta)*colMeans(haps) + I(theta/2)
 
+  
+  # in this case of only 1_0 and 0_1 haplotypes, cov_panel is singular
   cov_panel = cov(haps)
-
+  
   S = matrix(nrow = nloci, ncol = nloci, 0)
 
   # rho = 4*N*c_j where c_j is the rate of cross-over per generation per basepair and N is the effective popsize
@@ -107,17 +102,17 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
         # hypothetical effective popsize
         N = 1e4
         
+        # since rho = 0, S[i,j] = cov_panel[i,j]
         S[i,j] = exp((-4*N*rho*dist)/nsamp)*cov_panel[i,j]
       }
     }
   }
-
+  
+  # no longer singular after the following operation
   Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
   Sigma[abs(Sigma) < 1e-8] = 0
   
-  #sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
-  #print(sigma2)
-  sigma2 = 1
+  sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
   
   # this is where the dispersion parameter comes in: eqn 13
   d = diag(1/epsilon)
@@ -137,21 +132,24 @@ pos = c(50, 100)
 
 # starting population
 nsamp = 100
-haps = create_haps(nsamp, 0.4)
+# 1_0 haplotype is at 10% frequency and 0_1 is at 90%
+haps = create_haps(nsamp, 0.1)
 
-# increase the 1-0 haplotype from 40% to 90% (simulate positive selection)
+# increase the 1_0 haplotype from 10% to 90% (simulate positive selection)
 ev_haps = create_haps(nsamp, 0.9)
 
 lambdas = seq(5, 50, by = 5)
 l = length(lambdas)
 
-mse_est = rep(0, l)
-mse_opt = rep(0, l)
-mse_obs  = rep(0, l)
+mse_ldsp_est = rep(0, l)
+mse_opt_est = rep(0, l)
+mse_obs_est  = rep(0, l)
 
 nreps = 1000
 
 for (i in 1:l){
+  
+  # where to store estimates
   store_ldsp_est = rep(0,nreps)
   store_opt_est = rep(0, nreps)
   store_obs_est = rep(0, nreps)
@@ -165,7 +163,7 @@ for (i in 1:l){
     n = pooled_info[1,]  # total read counts
     n_1 = pooled_info[2,] # counts of "1" allele
     
-    # psedu-counts
+    # pseudo-counts
     y_obs = (n_1 + 0.5)/(n + 1)
     
     ldsp_est = perform_LDSP(y_obs, nloci, nsamp, haps, pos, n)
@@ -182,17 +180,14 @@ for (i in 1:l){
   }
   
   # calculate MSE
-  mse_est[i] = mse(store_ldsp_est, store_true_freq)
-  mse_opt[i] = mse(store_opt_est, store_true_freq)
-  mse_obs[i] = mse(store_obs_est, store_true_freq)
+  mse_ldsp_est[i] = mse(store_ldsp_est, store_true_freq)
+  mse_opt_est[i] = mse(store_opt_est, store_true_freq)
+  mse_obs_est[i] = mse(store_obs_est, store_true_freq)
 
 }
 
 
-plot(lambdas, mse_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "estimate of SNP 1 frequency", lwd=1.5)
-points(lambdas, mse_opt, col = "blue", lwd=1.5)
-points(lambdas, mse_obs, lwd=1.5)
+plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "estimate of SNP 1 frequency", lwd=1.5)
+points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
+points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
-#legend("topright", c("read counts only at focal SNP","LDSP"), lty=c(1,1), lwd=c(1,1),col=c("black","red"))
-
-# create a plot where y-axis is percent increased coverage
