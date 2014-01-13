@@ -61,21 +61,6 @@ and,
 \theta = \frac{(\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}{2m + (\sum_{i=1}^{2m-1} \frac{1}{i})^{-1}}
 \end{equation}
 
-\iffalse
-The distribution of $\{y_j: j \neq t\}$ given the test SNP,
-\begin{equation}
-\{y_i: i \neq t\} | y_t \sim N_{p-1}(\bar{\mu}, \bar{\Sigma}) \label{cond}
-\end{equation}
-where
-\begin{align*}
-\bar{\mu} = \vec{\mu_{i \neq t}} + \Sigma_{i \neq t, t}\frac{1}{\sigma_t^2}(y_t-\mu_{t}) 
-\end{align*}
-and
-\begin{align*}
-\hat{\Sigma} = \Sigma_{i \neq t, i \neq t} - \Sigma_{i \neq t, t}\frac{1}{\sigma_t^2}\Sigma_{t, i \neq t}
-\end{align*}
-\fi
-
 \subsection{Data at SNP $i$}
 Let $(n_i^0, n_i^1)$ denote the counts of "0" and "1" alleles at SNP $i$ and $n_i = n_i^0 + n_i^1$. Then 
 \begin{align*}
@@ -93,19 +78,19 @@ Next we replace $y_i$ by $\hat{y_i}$ in the variance for tractibility issues. Th
  \hat{y_i} | y_i \ \dot{\sim} \ N(y_i, \frac{\hat{y_i}(1-\hat{y_i})}{n_i}) \label{bin}
 \end{equation}
 
-We can expand equation \ref{bin} to p-dimensions (since the $\hat{y_i} | y_i$ are independent)
+We can expand equation \ref{bin} to p-dimensions (we can since the $\hat{y_i} | y_i$ are independent)
 \begin{equation}
-\hat{\vec{y}} | \vec{y} \ \dot{\sim} \ N_p(\vec{y}, \ diag(\epsilon_1,...,\epsilon_p))
+\hat{\vec{y}} | \vec{y} \ \dot{\sim} \ N_p(\vec{y}, \ diag(\epsilon_1,...,\epsilon_p)) 
 \end{equation}
 where $\epsilon_i = \frac{\hat{y}_i (1-\hat{y}_i)}{n_i}$ 
 
 We re-name the variables such that $y_i^{obs} = \hat{y_i}$, $y^{true}_i = y_i$ and make the approximation exact.
 \begin{equation}
-\vec{y^{obs}} | \vec{y^{true}} \sim  N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p))
+\vec{y^{obs}} | \vec{y^{true}} \sim  N_p(\vec{y^{true}}, \ diag(\epsilon_1,...,\epsilon_p)) \label{obs_true}
 \end{equation}
+We assume that, given $y^{true}$, the observations $y^{obs}$ are conditionally independent of the panel data ($M$). \\
 
-
-But, if the coverage is low, then the estimate of the frequency of a SNP can be 0 (i.e. $\frac{n_i^1}{n_i}=0$) which will introduce complications when we must invert matrices. Therefore we make the following modification,
+If the coverage is low, then the estimate of the frequency of a SNP can be 0 (i.e. $\frac{n_i^1}{n_i}=0$) which will introduce complications when we must invert matrices. Therefore we make the following modification,
 \begin{equation}
 y_i^{obs} = \frac{n_i^1+\frac{1}{2}}{n_i + 1}
 \end{equation} 
@@ -126,7 +111,7 @@ To obtain the distribution for the true frequencies conditional on the observed 
 P(\vec{y^{true}} | \vec{y^{obs}}, M) \propto P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}}|M)
 \end{align*}
 
-Let
+Let, 
 \begin{equation} \label{barsigma}
 \bar{\Sigma} = \big(\frac{\hat{\Sigma}^{-1}}{\sigma^2} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p})\big)^{-1}
 \end{equation}
