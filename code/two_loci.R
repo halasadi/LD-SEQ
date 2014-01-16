@@ -112,7 +112,8 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
   Sigma[abs(Sigma) < 1e-8] = 0
   
-  sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
+  #sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
+  sigma2 = 1
   
   # this is where the dispersion parameter comes in: eqn 13
   d = diag(1/epsilon)
