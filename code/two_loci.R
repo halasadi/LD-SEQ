@@ -146,6 +146,26 @@ haps = create_haps(nsamp, 0.1)
 # increase the 1_0 haplotype from 10% to 90% (simulate positive selection)
 ev_haps = create_haps(nsamp, 0.9)
 
+
+## code of testing ##
+#haps = matrix(nrow = nsamp, ncol = 2, 0)
+#for (i in 1:50){
+#  haps[i,1] = 1
+#  haps[i,2] = 0
+#}
+#for (i in 51:60){
+#  haps[i,1] = 0
+#  haps[i,2] = 1
+#}
+
+#for (i in 61:90){
+#  haps[i,1] = 1
+#  haps[i,2] = 1
+#}
+#ev_haps = haps
+## end testing code ##
+
+
 lambdas = seq(5, 50, by = 5)
 l = length(lambdas)
 
@@ -195,7 +215,7 @@ for (i in 1:l){
 }
 
 
-plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.03), main = "estimate of SNP 1 frequency", lwd=1.5)
+plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.05), main = "estimate of SNP 1 frequency", lwd=2.5)
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
