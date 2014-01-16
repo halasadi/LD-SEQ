@@ -106,6 +106,8 @@ We estimate $\sigma^2$ by maximizing the multivariate normal likelihood:
  \vec{y^{obs}}|M \sim N_p(\hat{\mu}, \sigma^2\hat{\Sigma} + diag(\epsilon_1,...,\epsilon_p))
 \end{equation}
 
+
+\subsection{Calculating the Posterior}
 To obtain the distribution for the true frequencies conditional on the observed data, we use Bayes theorem 
 \begin{align*}
 P(\vec{y^{true}} | \vec{y^{obs}}, M) \propto P(\vec{y^{obs}} | \vec{y^{true}}) P(\vec{y^{true}}|M)
@@ -125,6 +127,47 @@ Then since the normal is in the conjugate family,
 \vec{y^{true}} | \vec{y^{obs}}, M \sim N_p(\bar{\theta}, \bar{\Sigma})
 \end{equation}
 Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
+
+\subsection{Calculating the likelihood to avoid prior bias}
+In our simulations, we find the prior mean has an - unwanted - influence on the posterior frequency.
+
+Denote the test SNP by the subscript $t$. Then,
+
+\begin{equation}
+L(y_t^{true}) = P(y^{obs} | y_t^{true}, M) \propto \frac{P(y_t^{true}| y^{obs}, M)}{P(y_t^{true} | M)}
+\end{equation}
+From the above equations, we can see:
+
+\begin{equation}
+y_t^{true} | y_t^{obs}, M \sim N(\bar{\theta_t}, \bar{\Sigma}_{tt})
+\end{equation}
+and,
+\begin{equation}
+y_t^{true} | M \sim N(\theta_t, \Sigma_{tt})
+\end{equation}
+
+Thus,
+\begin{equation}
+L(y_t^{true}) \propto e^{ \frac{-(y_t^{true} - \bar{\theta}_t)^2}{2\bar{\Sigma}_{tt}} + \frac{(y_t^{true} - \theta_t)^2}{2\Sigma_{tt}} }
+\end{equation}
+Completing the square, we can see
+\begin{equation}
+\frac{-(y_t^{true} - \bar{\theta}_t)^2}{2\bar{\Sigma}_{tt}} + \frac{(y_t^{true} - \theta_t)^2}{2\Sigma_{tt}} = \frac{1}{2}(\frac{1}{\Sigma_{tt}} - \frac{1}{\bar{\Sigma}_{tt}}) (y_t^{true} - \frac{\theta_t\bar{\Sigma}_{tt} - \bar{\theta}_t\Sigma_{tt}}{\bar{\Sigma}_{tt}-\Sigma_{tt}})^2 + K
+\end{equation}
+Let,
+\begin{equation}
+\mu_t = \frac{\theta_t\bar{\Sigma}_{tt} - \bar{\theta}_t\Sigma_{tt}}{\bar{\Sigma}_{tt}-\Sigma_{tt}}
+\end{equation}
+and,
+\begin{equation}
+\sigma^2_t = \frac{1}{\frac{1}{\Sigma_{tt}} - \frac{1}{\bar{\Sigma}_{tt}}}
+\end{equation}
+Because the normal is in the conjugate family,
+\begin{equation}
+L(y_t^{true}) = pdf \ of \ N(\mu_t, \sigma^2_t)
+\end{equation}
+
+Therefore the MLE of $y_t^{true}$ is $\mu_t$.
 
 \subsection{Calculating the inverse of the covariance matrix}
 When $\hat{\Sigma}$ is singular, we decompose using SVD and calculate the pseudo-inverse,

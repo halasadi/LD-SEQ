@@ -119,7 +119,15 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
   theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
-  return(as.vector(theta_bar))
+  
+  # posterior
+  #return(theta_bar[1])
+
+  mu_t = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
+  
+  # likelihood
+  return(mu_t)
+  
 }
 
 mse <- function(y_hat, y){
@@ -176,7 +184,7 @@ for (i in 1:l){
     store_opt_est[j] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
     store_obs_est[j] = y_obs[1]
     #store_obs_est[j] = n_1[1]/n[1]
-    store_ldsp_est[j] = ldsp_est[1]
+    store_ldsp_est[j] = ldsp_est
   }
   
   # calculate MSE
