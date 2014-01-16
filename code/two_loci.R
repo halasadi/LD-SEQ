@@ -126,8 +126,11 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
 
   mu_t = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
   
-  # likelihood
-  return(mu_t)
+  # I think I missed a minus sign
+  sigma_2_t = 1/ ((1/Sigma[1,1]) - 1/(Sigma_bar[1,1]))  
+  
+  # likelihood + variance
+  return(c(mu_t, sigma_2_t))
   
 }
 
@@ -173,6 +176,7 @@ l = length(lambdas)
 mse_ldsp_est = rep(0, l)
 mse_opt_est = rep(0, l)
 mse_obs_est  = rep(0, l)
+mean_eff_cov = rep(0, l)
 
 nreps = 1000
 
@@ -183,6 +187,7 @@ for (i in 1:l){
   store_opt_est = rep(0, nreps)
   store_obs_est = rep(0, nreps)
   store_true_freq = rep(0, nreps)
+  store_effective_cov = rep(0, nreps)
   
   for (j in 1:nreps){
     
@@ -205,13 +210,15 @@ for (i in 1:l){
     store_opt_est[j] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
     store_obs_est[j] = y_obs[1]
     #store_obs_est[j] = n_1[1]/n[1]
-    store_ldsp_est[j] = ldsp_est
+    store_ldsp_est[j] = ldsp_est[1]
+    store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
   }
   
   # calculate MSE
   mse_ldsp_est[i] = mse(store_ldsp_est, store_true_freq)
   mse_opt_est[i] = mse(store_opt_est, store_true_freq)
   mse_obs_est[i] = mse(store_obs_est, store_true_freq)
+  mean_eff_cov[i] = mean(store_effective_cov)
 
 }
 
@@ -220,3 +227,4 @@ plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col =
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
+plot(lambdas, mean_eff_cov, xlab = "coverage", ylab = "effective coverage")

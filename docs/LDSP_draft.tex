@@ -13,23 +13,23 @@
 \textbf{Phase I - better estimate frequency using haplotypic information}:
 The Intuition is that data at each SNP are binomial counts, which help estimate the frequency of a SNP in a pool. But by combining information across multiple corrected SNPs, you can improve the estimated frequency of the test SNP. \\
 
-We demonstrate the feasibility of such an endeavor by a simple probability calculation:\\
-
-Say the objective is to estimate the frequency of SNP $1$ in a  pool. Denote SNP $1$ as $S_1$ which can take values from $\{0,1\}$.
+We demonstrate the feasibility of such an endeavor by a simple probability calculation: Say the objective is to estimate the frequency of SNP $1$ in a  pool. Denote SNP $1$ as $S_1$ which can take values from $\{0,1\}$.
 
 Consider another SNP $2$ ($S_2$). For simplicity, we suppose perfect correlation between the two SNPs (e.g. $P(S_1 = 1 | S_2 = 1) = 1 \ \& \ P(S_1 = 0 | S_2 = 0) = 1$) \\
 
 \textbf{one estimate}: $P(S_1 = 1) \approx \frac{n_1^1}{n_1}$ \\
 \textbf{second estimate}:  $P(S_1 = 1) = P(S_1 = 1 | S_2 = 0)P(S_2=0) + P(S_1 = 1 | S_2 = 1)P(S_2=1) = P(S_1 = 1 | S_2 = 1)P(S_2 = 1) = P(S_2 = 1) \approx \frac{n_2^1}{n_2}$ \\
 
-where $n_j^1$ is the number of "1" allele reads at SNP $j$ and $n_j^0$ is the number of "0" allele reads at SNP $j$ and $n_j = n_j^1 + n_j^0$. \\
+where $n_j^1$ is the number of "1" allele reads at SNP $j$ and $n_j^0$ is the number of "0" allele reads at SNP $j$ and $n_j = n_j^1 + n_j^0$. 
 
 We now have two estimates of $P(S_1=1)$ using two different pieces of data. Therefore, effectively we have doubled our coverage for SNP $1$. If instead of only one perfectly correlated SNP, we have a 1000 then sequencing only at 1x coverage will be like sequencing at 1000x coverage! \\
 
-\textbf{Phase II - detect selection using improved frequency estimate}:
+% put figure here of a pool of 1-0 haplotypes then on 1-x haplotype on the right
+
+\textbf{Phase II - detect selection using improved estimates}:
 To detect selection, we find sites that have had significant changes in their frequency compared to the founding population. We can do this by using a linear model which also allows us to model genetic drift with a normal error term.
 
-\section{Phase I}
+\section{Phase I - calculating effective coverage}
 \subsection{Prior from Li \& Stephens}
 Consider one lineage for now.
 
@@ -128,8 +128,10 @@ Then since the normal is in the conjugate family,
 \end{equation}
 Therefore a natural point estimate for $\vec{y^{true}}$ is $\bar{\theta}$.
 
-\subsection{Calculating the likelihood to avoid prior bias}
-In our simulations, we find the prior mean has an - unwanted - influence on the posterior frequency.
+%% two figures: where sample is from the panel and other not to showcase prior bias
+
+\subsection{Calculating the likelihood to avoid bias of the prior mean}
+As mentioned above, we assume the the panel and sample individuals are drawn from the same population. This is the never the case in reality but in some applications, the frequencies of alleles of interest have changed significantly but the correlation structure has changed slightly (i.e. very little recombination between nearby SNPs). Therefore we would just like to erase the influence of the prior mean. To do this, we calculate $L(y_t^{true})$. \\
 
 Denote the test SNP by the subscript $t$. Then,
 
@@ -169,6 +171,8 @@ L(y_t^{true}) = pdf \ of \ N(\mu_t, \sigma^2_t)
 
 Therefore the MLE of $y_t^{true}$ is $\mu_t$.
 
+% place figure here showing how our estimate is the optima
+
 \subsection{Calculating the inverse of the covariance matrix}
 When $\hat{\Sigma}$ is singular, we decompose using SVD and calculate the pseudo-inverse,
 \begin{equation}
@@ -179,11 +183,28 @@ where the pseudo-inverse is,
 \begin{equation}
 \hat{\Sigma}^{+} = V \begin{bmatrix} S^{-1} & 0 \\ 0 & 0 \end{bmatrix} U^T
 \end{equation}
-We modify \ref{barsigma} which is now probably non-singular??
+We modify \ref{barsigma} which is now probably non-singular?
 \begin{equation}
 \bar{\Sigma} =  \big(\frac{\hat{\Sigma}^{+}}{\sigma^2} + diag(\frac{1}{\epsilon_1},..., \frac{1}{\epsilon_p})\big)^{-1}
 \end{equation}
 
+\subsection{Computing the Effective Coverage}
+To calculate effective coverage ($n_e$) and the effective proportion ($p_e$), we approximate the normal with a binomial which can be justified using the laplace approximation.
+Let,
+\begin{equation} 
+p_e = \mu_t
+\end{equation}
+and,
+\begin{equation}
+\frac{p_e(1-p_e)}{n_e}= \sigma_t^2
+\end{equation}
+Then,
+\begin{equation}
+n_e = \frac{\mu_t(1-\mu_t)}{\sigma_t^2}
+\end{equation}
+
+\subsection{large-scale simulation}
+use MS to generate haplotypes and then evolve population with recombination - can use Forqs here or maybe better to write my own code.
 
 \section{Phase II - estimating $\beta$}
 Let $f_{i,k,j}$ denote the frequency of the $j$th SNP in population $i$ and replicate $k$. Then,
