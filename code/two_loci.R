@@ -227,4 +227,6 @@ plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col =
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
+
+# why negative and why not y = 2x?
 plot(lambdas, mean_eff_cov, xlab = "coverage", ylab = "effective coverage")
