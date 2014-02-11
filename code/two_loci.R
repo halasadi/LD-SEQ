@@ -127,7 +127,7 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   mu_t = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
   
   # I think I missed a minus sign
-  sigma_2_t = 1/ ((1/Sigma[1,1]) - 1/(Sigma_bar[1,1]))  
+  sigma_2_t = 1/ ((-1/Sigma[1,1]) + 1/(Sigma_bar[1,1]))  
   
   # likelihood + variance
   return(c(mu_t, sigma_2_t))
@@ -211,7 +211,12 @@ for (i in 1:l){
     store_obs_est[j] = y_obs[1]
     #store_obs_est[j] = n_1[1]/n[1]
     store_ldsp_est[j] = ldsp_est[1]
-    store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
+    n_1 = ((1-ldsp_est[1]) * ldsp_est[1]^2)/ldsp_est[2]
+    n = n_1/ldsp_est[1]
+    
+    # same answer as using Taylor expansion
+    #store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
+    store_effective_cov[j] = n_1/ldsp_est[1]
   }
   
   # calculate MSE
@@ -229,4 +234,5 @@ points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 
 # why negative and why not y = 2x?
-plot(lambdas, mean_eff_cov, xlab = "coverage", ylab = "effective coverage")
+plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage")
+abline(lm(mean_eff_cov ~ lambdas))

@@ -162,7 +162,7 @@ Let,
 \end{equation}
 and,
 \begin{equation}
-\sigma^2_t = \frac{1}{\frac{1}{\Sigma_{tt}} - \frac{1}{\bar{\Sigma}_{tt}}}
+\sigma^2_t = \frac{1}{-\frac{1}{\Sigma_{tt}} +\frac{1}{\bar{\Sigma}_{tt}}}
 \end{equation}
 Because the normal is in the conjugate family,
 \begin{equation}
@@ -189,8 +189,11 @@ We modify \ref{barsigma} which is now probably non-singular?
 \end{equation}
 
 \subsection{Computing the Effective Coverage}
-To calculate effective coverage ($n_e$) and the effective proportion ($p_e$), we approximate the normal with a binomial which can be justified using the laplace approximation.
-Let,
+To calculate effective coverage ($n_e$) and the effective proportion
+($p_e$), we approximate the normal with a binomial.
+
+\subsubsection{Simply taking the reverse mapping of the well known
+  binomial to normal transformation}
 \begin{equation} 
 p_e = \mu_t
 \end{equation}
@@ -202,6 +205,34 @@ Then,
 \begin{equation}
 n_e = \frac{\mu_t(1-\mu_t)}{\sigma_t^2}
 \end{equation}
+
+\subsubsection{Using the Taylor expansion}
+Our goal is to approximate a normal with a binomial. Let's try this,
+\begin{equation}
+f(p) = logl(p) = log(p^{n_1}(1-p)^{n-n_1})
+\end{equation}
+Taylor expanding $f(p)$ around its maximum we get,
+\begin{equation}
+f(p) \approx f(\hat{p}) + \frac{(p-\hat{p})^2}{2}f''(\hat{p})
+\end{equation}
+Therefore,
+\begin{equation}
+e^{f(p)} = p^{n_1}(1-p)^{n-n_1} \approx Ce^{\frac{-(p-\hat{p})^2}{2\frac{-1}{f''(\hat{p})}}}
+\end{equation}
+We can then let,
+\begin{equation}
+ \mu_t = \hat{p} 
+\end{equation}
+and,
+\begin{equation}
+ \sigma_t^2  = \frac{-1}{f''(\hat{p})} =\frac{(1-\hat{p})\hat{p}^2}{n_1}
+\end{equation}
+where $\hat{p} = \frac{n_1}{n}$.
+Solving the equations for $n_e$ (i.e. $n$):
+\begin{equation}
+n_e = \frac{\mu_t(1-\mu_t)}{\sigma_t^2}
+\end{equation} 
+which is the same as above!
 
 \subsection{large-scale simulation}
 use MS to generate haplotypes and then evolve population with recombination - can use Forqs here or maybe better to write my own code.
