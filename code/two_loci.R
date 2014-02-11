@@ -121,12 +121,11 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
   theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
   
-  # posterior
+  # posterior estimate of SNP 1
   #return(theta_bar[1])
 
   mu_t = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
   
-  # I think I missed a minus sign
   sigma_2_t = 1/ ((-1/Sigma[1,1]) + 1/(Sigma_bar[1,1]))  
   
   # likelihood + variance
@@ -151,7 +150,7 @@ haps = create_haps(nsamp, 0.1)
 ev_haps = create_haps(nsamp, 0.9)
 
 
-## code of testing ##
+## code for testing ##
 #haps = matrix(nrow = nsamp, ncol = 2, 0)
 #for (i in 1:50){
 #  haps[i,1] = 1
@@ -170,7 +169,11 @@ ev_haps = create_haps(nsamp, 0.9)
 ## end testing code ##
 
 
-lambdas = seq(5, 50, by = 5)
+###### Begin script ##########
+
+# lambda specifies coverage
+lambdas = seq(5, 40, by = 5)
+lambdas = c(1, lambdas)
 l = length(lambdas)
 
 mse_ldsp_est = rep(0, l)
@@ -211,12 +214,9 @@ for (i in 1:l){
     store_obs_est[j] = y_obs[1]
     #store_obs_est[j] = n_1[1]/n[1]
     store_ldsp_est[j] = ldsp_est[1]
-    n_1 = ((1-ldsp_est[1]) * ldsp_est[1]^2)/ldsp_est[2]
-    n = n_1/ldsp_est[1]
     
     # same answer as using Taylor expansion
-    #store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
-    store_effective_cov[j] = n_1/ldsp_est[1]
+    store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
   }
   
   # calculate MSE
@@ -228,11 +228,47 @@ for (i in 1:l){
 }
 
 
+#### plot stuff ####
+
 plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.05), main = "estimate of SNP 1 frequency", lwd=2.5)
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 
-# why negative and why not y = 2x?
-plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage")
+# why not y = 2x?
+fit = lm(mean_eff_cov ~ lambdas)
+plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage", main = paste("y=", fit$coefficients[2], "x+", 
+                                                                                              fit$coefficients[1], sep =""))
 abline(lm(mean_eff_cov ~ lambdas))
+
+## plotting effective coverage using MSE ##
+## The idea:
+## Let f(x) be the function that maps coverage to mse estimated from naive method
+## Let g(x) be the function that maps coverage to mse estimated from LDSP
+## Then f^-1 (g(x)) maps coverage to effective coverage
+## The functional form of f(x) and g(x) look exponential (R^2 ~ 0.9 and 0.82 respectively)
+
+g <- function(x){
+  c_ldsp = coef(lm(log(mse_ldsp_est) ~ lambdas))
+  b = as.numeric(c_ldsp[1])
+  m = as.numeric(c_ldsp[2])
+  return(exp(b)*exp(m*x))
+}
+
+f_inv <- function(x){
+  c_raw = coef(lm(log(mse_obs_est) ~ lambdas))
+  b = as.numeric(c_raw[1])
+  m = as.numeric(c_raw[2])
+  return((log(x)-b)/m)
+}
+
+f_eff_cov <- function(x){
+  return(f_inv(g(x)))
+}
+
+mse_eff_cov = f_eff_cov(lambdas)
+fit = lm(mse_eff_cov ~ lambdas)
+plot(lambdas, mse_eff_cov, xlab = "true coverage", ylab = "effective coverage using MSE", main = paste("y=", fit$coefficients[2], "x+", 
+                                                                                                   fit$coefficients[1], sep =""))
+abline(lm(mse_eff_cov ~ lambdas))
+
