@@ -148,7 +148,7 @@ y^{true}|M\sim N_{p}(\mu,\Sigma)\label{eq:prior}
 
 \end_inset
 
-(Wen & Stephens, 2010) derive the estimates for 
+(Wen & Stephens, 2010) derive estimates for 
 \begin_inset Formula $\mu$
 \end_inset
 
@@ -308,7 +308,7 @@ let
 \begin_inset Formula $y_{i}^{obs}$
 \end_inset
 
- in the variance (a common simplication).
+ in the variance (a common simplification).
  Therefore our equation becomes, 
 \begin_inset Formula 
 \begin{equation}
@@ -321,12 +321,10 @@ y_{i}^{obs}|y_{i}^{true}\ \dot{\sim}\ N(y_{i}^{true},\frac{y_{i}^{obs}(1-y_{i}^{
 \end_layout
 
 \begin_layout Standard
-Given the true frequency of a SNP, the estimates are independent (i.e.
- 
-\begin_inset Formula $y_{1}^{obs}|y_{1}^{true},y_{2}^{obs}|y_{2}^{true},...,y_{p}^{obs}|y_{p}^{true}$
+\begin_inset Formula $y_{1}^{obs}|y_{1}^{true},y_{2}^{obs}|y_{2}^{true},\ldots,y_{p}^{obs}|y_{p}^{true}$
 \end_inset
 
- are independent) therfore 
+ are independent therefore we can write, 
 \begin_inset Formula 
 \begin{equation}
 y^{obs}|y^{true}\ \dot{\sim}\ N_{p}(y^{true},\ diag(\epsilon_{1},...,\epsilon_{p}))\label{eq:obs_true}
@@ -557,7 +555,7 @@ Completing the square, we can see
 Let, 
 \begin_inset Formula 
 \begin{equation}
-\theta_{i}=\frac{\hat{\mu_{i}}\bar{\Sigma}_{ii}-\bar{\mu_{i}}\hat{\Sigma}_{ii}}{\bar{\Sigma}_{ii}-\hat{\Sigma}_{ii}}
+\tilde{\mu_{i}}=\frac{\hat{\mu_{i}}\bar{\Sigma}_{ii}-\bar{\mu_{i}}\hat{\Sigma}_{ii}}{\bar{\Sigma}_{ii}-\hat{\Sigma}_{ii}}
 \end{equation}
 
 \end_inset
@@ -565,7 +563,7 @@ Let,
 and, 
 \begin_inset Formula 
 \begin{equation}
-\sigma_{i}^{2}=\frac{1}{-\frac{1}{\hat{\Sigma}_{ii}}+\frac{1}{\bar{\Sigma}_{ii}}}
+\tilde{\sigma}_{i}^{2}=\frac{1}{-\frac{1}{\hat{\Sigma}_{ii}}+\frac{1}{\bar{\Sigma}_{ii}}}
 \end{equation}
 
 \end_inset
@@ -573,7 +571,7 @@ and,
 then, 
 \begin_inset Formula 
 \begin{equation}
-L(y_{i}^{true})=\frac{1}{{\sigma_{i}\sqrt{2\pi}}}e^{{{-\left({y_{i}^{true}-\theta_{i}}\right)^{2}}\mathord{\left/{\vphantom{{-\left({y_{i}^{true}-\theta_{i}}\right)^{2}}{2\sigma_{i}^{2}}}}\right.\kern -\nulldelimiterspace}{2\sigma_{i}^{2}}}}
+L(y_{i}^{true})=\frac{1}{{\tilde{\sigma}_{i}\sqrt{2\pi}}}e^{{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}\mathord{\left/{\vphantom{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}{2\tilde{\sigma}_{i}^{2}}}}\right.\kern -\nulldelimiterspace}{2\tilde{\sigma}_{i}^{2}}}}
 \end{equation}
 
 \end_inset
@@ -605,7 +603,7 @@ ation
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-p_{e}=\mu_{t}
+p_{e}=\tilde{\mu_{i}}
 \end{equation}
 
 \end_inset
@@ -613,7 +611,7 @@ p_{e}=\mu_{t}
 and, 
 \begin_inset Formula 
 \begin{equation}
-\frac{p_{e}(1-p_{e})}{n_{e}}=\sigma_{t}^{2}
+\frac{p_{e}(1-p_{e})}{n_{e}}=\tilde{\sigma}_{i}^{2}
 \end{equation}
 
 \end_inset
@@ -621,7 +619,7 @@ and,
 Then, 
 \begin_inset Formula 
 \begin{equation}
-n_{e}=\frac{\mu_{t}(1-\mu_{t})}{\sigma_{t}^{2}}
+n_{e}=\frac{\tilde{\mu_{i}}(1-\tilde{\mu_{i}})}{\tilde{\sigma}_{i}^{2}}
 \end{equation}
 
 \end_inset
@@ -666,7 +664,7 @@ e^{f(p)}=p^{n_{1}}(1-p)^{n-n_{1}}\approx Ce^{\frac{-(p-\hat{p})^{2}}{2\frac{-1}{
 let, 
 \begin_inset Formula 
 \begin{equation}
-\mu_{t}=\hat{p}
+\tilde{\mu_{i}}=\hat{p}
 \end{equation}
 
 \end_inset
@@ -674,7 +672,7 @@ let,
 and, 
 \begin_inset Formula 
 \begin{equation}
-\sigma_{t}^{2}=\frac{-1}{f''(\hat{p})}=\frac{(1-\hat{p})\hat{p}^{2}}{n_{1}}
+\tilde{\sigma}_{i}^{2}=\frac{-1}{f''(\hat{p})}=\frac{(1-\hat{p})\hat{p}^{2}}{n_{1}}
 \end{equation}
 
 \end_inset
@@ -696,7 +694,7 @@ where
 ): 
 \begin_inset Formula 
 \begin{equation}
-n_{e}=\frac{\mu_{t}(1-\mu_{t})}{\sigma_{t}^{2}}
+n_{e}=\frac{\tilde{\mu_{i}}(1-\tilde{\mu_{i}})}{\tilde{\sigma}_{i}^{2}}
 \end{equation}
 
 \end_inset

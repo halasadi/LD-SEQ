@@ -142,7 +142,7 @@ nloci = 2
 pos = c(50, 100)
 
 # starting population
-nsamp = 100
+nsamp = 1000
 # 1_0 haplotype is at 10% frequency and 0_1 is at 90%
 haps = create_haps(nsamp, 0.1)
 
@@ -172,7 +172,7 @@ ev_haps = create_haps(nsamp, 0.9)
 ###### Begin script ##########
 
 # lambda specifies coverage
-lambdas = seq(5, 40, by = 5)
+lambdas = seq(5, 50, by = 5)
 lambdas = c(1, lambdas)
 l = length(lambdas)
 
@@ -181,7 +181,7 @@ mse_opt_est = rep(0, l)
 mse_obs_est  = rep(0, l)
 mean_eff_cov = rep(0, l)
 
-nreps = 1000
+nreps = 500
 
 for (i in 1:l){
   
@@ -241,34 +241,4 @@ plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage",
                                                                                               fit$coefficients[1], sep =""))
 abline(lm(mean_eff_cov ~ lambdas))
 
-## plotting effective coverage using MSE ##
-## The idea:
-## Let f(x) be the function that maps coverage to mse estimated from naive method
-## Let g(x) be the function that maps coverage to mse estimated from LDSP
-## Then f^-1 (g(x)) maps coverage to effective coverage
-## The functional form of f(x) and g(x) look exponential (R^2 ~ 0.9 and 0.82 respectively)
-
-g <- function(x){
-  c_ldsp = coef(lm(log(mse_ldsp_est) ~ lambdas))
-  b = as.numeric(c_ldsp[1])
-  m = as.numeric(c_ldsp[2])
-  return(exp(b)*exp(m*x))
-}
-
-f_inv <- function(x){
-  c_raw = coef(lm(log(mse_obs_est) ~ lambdas))
-  b = as.numeric(c_raw[1])
-  m = as.numeric(c_raw[2])
-  return((log(x)-b)/m)
-}
-
-f_eff_cov <- function(x){
-  return(f_inv(g(x)))
-}
-
-mse_eff_cov = f_eff_cov(lambdas)
-fit = lm(mse_eff_cov ~ lambdas)
-plot(lambdas, mse_eff_cov, xlab = "true coverage", ylab = "effective coverage using MSE", main = paste("y=", fit$coefficients[2], "x+", 
-                                                                                                   fit$coefficients[1], sep =""))
-abline(lm(mse_eff_cov ~ lambdas))
-
+plot(lambdas, mse_opt_est/mse_ldsp_est, xlab = "coverage", ylab = "Opt MSE / LDSP MSE", main = "<1 is bad")
