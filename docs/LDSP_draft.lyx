@@ -2,7 +2,7 @@
 \lyxformat 413
 \begin_document
 \begin_header
-\textclass article
+\textclass paper
 \begin_preamble
 
 \usepackage{amsfonts}\title{LDSP- Linear Detection of Selection in Pooled sequence data}
@@ -83,143 +83,21 @@ Introduction
 \begin_layout Standard
 
 \series bold
-Phase I - better estimate frequency using haplotypic information
+Phase I - Calculate effective coverage using haplotypic information
 \series default
-: The Intuition is that data at each SNP are binomial counts, which help
+: The intuition is that data at each SNP are binomial counts, which help
  estimate the frequency of a SNP in a pool.
  But by combining information across multiple corrected SNPs, you can improve
- the estimated frequency of the test SNP.
+ the estimate.
  
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-We demonstrate the feasibility of such an endeavor by a simple probability
- calculation: Say the objective is to estimate the frequency of SNP 
-\begin_inset Formula $1$
-\end_inset
-
- in a pool.
- Denote SNP 
-\begin_inset Formula $1$
-\end_inset
-
- as 
-\begin_inset Formula $S_{1}$
-\end_inset
-
- which can take values from 
-\begin_inset Formula $\{0,1\}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-Consider another SNP 
-\begin_inset Formula $2$
-\end_inset
-
- (
-\begin_inset Formula $S_{2}$
-\end_inset
-
-).
- For simplicity, we suppose perfect correlation between the two SNPs (e.g.
- 
-\begin_inset Formula $P(S_{1}=1|S_{2}=1)=1\ \&\ P(S_{1}=0|S_{2}=0)=1$
-\end_inset
-
-) 
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
 
 \series bold
-one estimate
+Phase II - detect selection using effective coverage 
 \series default
-: 
-\begin_inset Formula $P(S_{1}=1)\approx\frac{n_{1}^{1}}{n_{1}}$
-\end_inset
-
- 
-\begin_inset Newline newline
-\end_inset
-
- 
-\series bold
-second estimate
-\series default
-: 
-\begin_inset Formula $P(S_{1}=1)=P(S_{1}=1|S_{2}=0)P(S_{2}=0)+P(S_{1}=1|S_{2}=1)P(S_{2}=1)=P(S_{1}=1|S_{2}=1)P(S_{2}=1)=P(S_{2}=1)\approx\frac{n_{2}^{1}}{n_{2}}$
-\end_inset
-
- 
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-where 
-\begin_inset Formula $n_{j}^{1}$
-\end_inset
-
- is the number of 1 allele reads at SNP 
-\begin_inset Formula $j$
-\end_inset
-
- and 
-\begin_inset Formula $n_{j}^{0}$
-\end_inset
-
- is the number of 0 allele reads at SNP 
-\begin_inset Formula $j$
-\end_inset
-
- and 
-\begin_inset Formula $n_{j}=n_{j}^{1}+n_{j}^{0}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-We now have two estimates of 
-\begin_inset Formula $P(S_{1}=1)$
-\end_inset
-
- using two different pieces of data.
- Therefore, effectively we have doubled our coverage for SNP 
-\begin_inset Formula $1$
-\end_inset
-
-.
- If instead of only one perfectly correlated SNP, we have a 1000 then sequencing
- only at 1x coverage will be like sequencing at 1000x coverage! 
-\begin_inset Newline newline
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-Phase II - detect selection using improved estimates
-\series default
-: To detect selection, we find sites that have had significant changes in
- their frequency compared to the founding population.
- We can do this by using a linear model which also allows us to model genetic
- drift with a normal error term.
+: fit a linear model.
 \end_layout
 
 \begin_layout Section
@@ -227,7 +105,7 @@ Phase I - calculating effective coverage
 \end_layout
 
 \begin_layout Subsection
-Prior from Li & Stephens
+The Prior
 \end_layout
 
 \begin_layout Standard
@@ -244,23 +122,15 @@ Let
 \begin_inset Formula $E[y_{i}]=\mu_{i}$
 \end_inset
 
- and the frequency of the test SNP be 
-\begin_inset Formula $y_{t}$
-\end_inset
-
  and 
 \begin_inset Formula $M$
 \end_inset
 
  denote the 
-\begin_inset Formula $2m$
+\begin_inset Formula $(2m)$
 \end_inset
 
-x
-\begin_inset Formula $p$
-\end_inset
-
- panel (i.e.
+xp panel (i.e.
  
 \begin_inset Formula $2m$
 \end_inset
@@ -273,12 +143,12 @@ x
  As in (Wen & Stephens, 2010), we assume 
 \begin_inset Formula 
 \begin{equation}
-\vec{y}|M\sim N_{p}(\mu,\Sigma)\label{eq:prior}
+y^{true}|M\sim N_{p}(\mu,\Sigma)\label{eq:prior}
 \end{equation}
 
 \end_inset
 
-(Wen & Stephens, 2010) derived the estimates for 
+(Wen & Stephens, 2010) derive the estimates for 
 \begin_inset Formula $\mu$
 \end_inset
 
@@ -286,8 +156,7 @@ x
 \begin_inset Formula $\Sigma$
 \end_inset
 
- from the haplotype copying model presented in (Li & Stephens, 2003).
- 
+: 
 \begin_inset Formula 
 \begin{equation}
 \hat{\mu}=(1-\theta)f^{panel}+\frac{\theta}{2}1
@@ -383,11 +252,7 @@ and,
 \end_layout
 
 \begin_layout Subsection
-Data at SNP 
-\begin_inset Formula $i$
-\end_inset
-
-
+The likelihood
 \end_layout
 
 \begin_layout Standard
@@ -399,20 +264,11 @@ Let
 \begin_inset Formula $i$
 \end_inset
 
- and 
+, 
 \begin_inset Formula $n_{i}=n_{i}^{0}+n_{i}^{1}$
 \end_inset
 
-.
- Then 
-\begin_inset Formula 
-\begin{align*}
-n_{i}^{1}|y_{i}\sim Bin(n_{i},y_{i})\ \dot{\sim}\ N(n_{i}y_{i},n_{i}y_{i}(1-y_{i}))
-\end{align*}
-
-\end_inset
-
-where 
+, and 
 \begin_inset Formula $y_{i}$
 \end_inset
 
@@ -421,37 +277,42 @@ where
 \end_inset
 
  1 allele.
+ 
+\begin_inset Formula 
+\begin{align*}
+n_{i}^{1}|y_{i}^{true}\sim Bin(n_{i},y_{i}^{true})\ \dot{\sim}\ N(n_{i}y_{i},n_{i}y_{i}^{true}(1-y_{i}^{true}))
+\end{align*}
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\implies\frac{n_{i}^{1}}{n_{i}}|y_{i}\ \dot{\sim}\ N(y_{i},\frac{y_{i}(1-y_{i})}{n_{i}})
+\implies\frac{n_{i}^{1}}{n_{i}}|y_{i}^{true}\ \dot{\sim}\ N(y_{i}^{true},\frac{y_{i}^{true}(1-y_{i}^{true})}{n_{i}})
 \end{equation}
 
 \end_inset
 
 let 
-\begin_inset Formula $\hat{y_{i}}=\frac{n_{i}^{1}}{n_{i}}$
+\begin_inset Formula $y_{i}^{obs}=\frac{n_{i}^{1}}{n_{i}}$
 \end_inset
 
-
-\begin_inset Newline newline
-\end_inset
-
- Next we replace 
-\begin_inset Formula $y_{i}$
+ and replace 
+\begin_inset Formula $y_{i}^{true}$
 \end_inset
 
  by 
-\begin_inset Formula $\hat{y_{i}}$
+\begin_inset Formula $y_{i}^{obs}$
 \end_inset
 
- in the variance for tractibility issues.
- Therefore, 
+ in the variance (a common simplication).
+ Therefore our equation becomes, 
 \begin_inset Formula 
 \begin{equation}
-\hat{y_{i}}|y_{i}\ \dot{\sim}\ N(y_{i},\frac{\hat{y_{i}}(1-\hat{y_{i}})}{n_{i}})\label{bin}
+y_{i}^{obs}|y_{i}^{true}\ \dot{\sim}\ N(y_{i}^{true},\frac{y_{i}^{obs}(1-y_{i}^{obs})}{n_{i}})\label{bin}
 \end{equation}
 
 \end_inset
@@ -460,73 +321,36 @@ let
 \end_layout
 
 \begin_layout Standard
-We can expand equation 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "bin"
-
+Given the true frequency of a SNP, the estimates are independent (i.e.
+ 
+\begin_inset Formula $y_{1}^{obs}|y_{1}^{true},y_{2}^{obs}|y_{2}^{true},...,y_{p}^{obs}|y_{p}^{true}$
 \end_inset
 
- to p-dimensions (we can since the 
-\begin_inset Formula $\hat{y_{i}}|y_{i}$
-\end_inset
-
- are independent) 
+ are independent) therfore 
 \begin_inset Formula 
 \begin{equation}
-\hat{\vec{y}}|\vec{y}\ \dot{\sim}\ N_{p}(\vec{y},\ diag(\epsilon_{1},...,\epsilon_{p}))
+y^{obs}|y^{true}\ \dot{\sim}\ N_{p}(y^{true},\ diag(\epsilon_{1},...,\epsilon_{p}))\label{eq:obs_true}
 \end{equation}
 
 \end_inset
 
 where 
-\begin_inset Formula $\epsilon_{i}=\frac{\hat{y}_{i}(1-\hat{y}_{i})}{n_{i}}$
+\begin_inset Formula $\epsilon_{i}=\frac{y_{i}^{obs}(1-y_{i}^{obs})}{n_{i}}$
 \end_inset
 
 
 \end_layout
 
-\begin_layout Standard
-We re-name the variables such that 
-\begin_inset Formula $y_{i}^{obs}=\hat{y_{i}}$
+\begin_layout Subsubsection
+Avoiding 
+\begin_inset Formula $y_{i}^{obs}=0$
 \end_inset
 
-, 
-\begin_inset Formula $y_{i}^{true}=y_{i}$
-\end_inset
-
- and make the approximation exact.
  
-\begin_inset Formula 
-\begin{equation}
-\vec{y^{obs}}|\vec{y^{true}}\sim N_{p}(\vec{y^{true}},\ diag(\epsilon_{1},...,\epsilon_{p}))\label{obs_true}
-\end{equation}
-
-\end_inset
-
-We assume that, given 
-\begin_inset Formula $y^{true}$
-\end_inset
-
-, the observations 
-\begin_inset Formula $y^{obs}$
-\end_inset
-
- are conditionally independent of the panel data (
-\begin_inset Formula $M$
-\end_inset
-
-).
- 
-\begin_inset Newline newline
-\end_inset
-
-
 \end_layout
 
 \begin_layout Standard
-If the coverage is low, then the estimate of the frequency of a SNP can
- be 0 (i.e.
+If the coverage is low, then a frequency estimate can be zero (i.e.
  
 \begin_inset Formula $\frac{n_{i}^{1}}{n_{i}}=0$
 \end_inset
@@ -543,13 +367,17 @@ y_{i}^{obs}=\frac{n_{i}^{1}+\frac{1}{2}}{n_{i}+1}
 
 \end_layout
 
+\begin_layout Subsubsection
+Incorporating base quality scores
+\end_layout
+
 \begin_layout Subsection
-Incorporating Dispersion
+The Posterior
 \end_layout
 
 \begin_layout Standard
 In the distribution of 
-\begin_inset Formula $\vec{y}$
+\begin_inset Formula $y^{true}$
 \end_inset
 
 , we assumed that the panel and study individuals are from the sample population
@@ -580,7 +408,7 @@ reference "eq:prior"
  
 \begin_inset Formula 
 \begin{equation}
-\vec{y^{true}}|M\sim N_{p}(\hat{\mu},\sigma^{2}\hat{\Sigma})
+y^{true}|M\sim N_{p}(\hat{\mu},\sigma^{2}\hat{\Sigma})
 \end{equation}
 
 \end_inset
@@ -596,7 +424,7 @@ We estimate
  by maximizing the multivariate normal likelihood: 
 \begin_inset Formula 
 \begin{equation}
-\vec{y^{obs}}|M\sim N_{p}(\hat{\mu},\sigma^{2}\hat{\Sigma}+diag(\epsilon_{1},...,\epsilon_{p}))
+y^{obs}|M\sim N_{p}(\hat{\mu},\sigma^{2}\hat{\Sigma}+diag(\epsilon_{1},...,\epsilon_{p}))
 \end{equation}
 
 \end_inset
@@ -604,16 +432,12 @@ We estimate
 
 \end_layout
 
-\begin_layout Subsection
-Calculating the Posterior
-\end_layout
-
 \begin_layout Standard
 To obtain the distribution for the true frequencies conditional on the observed
  data, we use Bayes theorem 
 \begin_inset Formula 
 \begin{align*}
-P(\vec{y^{true}}|\vec{y^{obs}},M)\propto P(\vec{y^{obs}}|\vec{y^{true}})P(\vec{y^{true}}|M)
+P(y^{true}|y^{obs},M)\propto P(y^{obs}|y^{true})P(y^{true}|M)
 \end{align*}
 
 \end_inset
@@ -633,7 +457,7 @@ Let,
 and, 
 \begin_inset Formula 
 \begin{equation}
-\bar{\theta}=\bar{\Sigma}\ (\frac{\hat{\Sigma}^{-1}}{\sigma^{2}}\hat{\mu}+diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})\ \vec{y^{obs}})
+\bar{\mu}=\bar{\Sigma}\ (\frac{\hat{\Sigma}^{-1}}{\sigma^{2}}\hat{\mu}+diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})\ y^{obs})
 \end{equation}
 
 \end_inset
@@ -644,43 +468,24 @@ Then since the normal is in the conjugate family,
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\vec{y^{true}}|\vec{y^{obs}},M\sim N_{p}(\bar{\theta},\bar{\Sigma})
+y^{true}|y^{obs},M\sim N_{p}(\bar{\mu},\bar{\Sigma})
 \end{equation}
 
 \end_inset
 
 Therefore a natural point estimate for 
-\begin_inset Formula $\vec{y^{true}}$
+\begin_inset Formula $y^{true}$
 \end_inset
 
  is 
-\begin_inset Formula $\bar{\theta}$
+\begin_inset Formula $\bar{\mu}$
 \end_inset
 
 .
 \end_layout
 
-\begin_layout Standard
-\begin_inset ERT
-status collapsed
-
-\begin_layout Plain Layout
-
-%% two figures: where sample is from the panel and other not to showcase
- prior bias
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Calculating the likelihood to avoid bias of the prior mean
+\begin_layout Subsubsection
+Avoiding prior mean bias
 \end_layout
 
 \begin_layout Standard
@@ -690,43 +495,33 @@ As mentioned above, we assume the the panel and sample individuals are drawn
  of alleles of interest have changed significantly but the correlation structure
  has changed slightly (i.e.
  very little recombination between nearby SNPs).
- Therefore we would just like to erase the influence of the prior mean.
- To do this, we calculate 
-\begin_inset Formula $L(y_{t}^{true})$
-\end_inset
-
-.
+ Therefore we would just like to use the information from SNP correlations.
  
-\begin_inset Newline newline
+\begin_inset Formula $L(y_{i}^{true})$
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-Denote the test SNP by the subscript 
-\begin_inset Formula $t$
-\end_inset
-
-.
- Then,
+ will do the job.
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-L(y_{t}^{true})=P(y^{obs}|y_{t}^{true},M)\propto\frac{P(y_{t}^{true}|y^{obs},M)}{P(y_{t}^{true}|M)}
+L(y_{i}^{true})=P(y^{obs}|y_{i}^{true},M)\propto\frac{P(y_{i}^{true}|y^{obs},M)}{P(y_{i}^{true}|M)}
 \end{equation}
 
 \end_inset
 
-From the above equations, we can see:
+
+\end_layout
+
+\begin_layout Standard
+We showed above,
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-y_{t}^{true}|y_{t}^{obs},M\sim N(\bar{\theta_{t}},\bar{\Sigma}_{tt})
+y_{i}^{true}|y_{i}^{obs},M\sim N(\bar{\mu_{i}},\bar{\Sigma}_{ii})
 \end{equation}
 
 \end_inset
@@ -734,7 +529,7 @@ y_{t}^{true}|y_{t}^{obs},M\sim N(\bar{\theta_{t}},\bar{\Sigma}_{tt})
 and, 
 \begin_inset Formula 
 \begin{equation}
-y_{t}^{true}|M\sim N(\theta_{t},\Sigma_{tt})
+y_{i}^{true}|M\sim N(\hat{\mu_{i}},\hat{\Sigma_{ii}})
 \end{equation}
 
 \end_inset
@@ -746,7 +541,7 @@ y_{t}^{true}|M\sim N(\theta_{t},\Sigma_{tt})
 Thus, 
 \begin_inset Formula 
 \begin{equation}
-L(y_{t}^{true})\propto e^{\frac{-(y_{t}^{true}-\bar{\theta}_{t})^{2}}{2\bar{\Sigma}_{tt}}+\frac{(y_{t}^{true}-\theta_{t})^{2}}{2\Sigma_{tt}}}
+L(y_{i}^{true})\propto e^{\frac{-(y_{i}^{true}-\bar{\mu_{i}})^{2}}{2\bar{\Sigma}_{ii}}+\frac{(y_{i}^{true}-\hat{\mu_{i}})^{2}}{2\hat{\Sigma}_{ii}}}
 \end{equation}
 
 \end_inset
@@ -754,7 +549,7 @@ L(y_{t}^{true})\propto e^{\frac{-(y_{t}^{true}-\bar{\theta}_{t})^{2}}{2\bar{\Sig
 Completing the square, we can see 
 \begin_inset Formula 
 \begin{equation}
-\frac{-(y_{t}^{true}-\bar{\theta}_{t})^{2}}{2\bar{\Sigma}_{tt}}+\frac{(y_{t}^{true}-\theta_{t})^{2}}{2\Sigma_{tt}}=\frac{1}{2}(\frac{1}{\Sigma_{tt}}-\frac{1}{\bar{\Sigma}_{tt}})(y_{t}^{true}-\frac{\theta_{t}\bar{\Sigma}_{tt}-\bar{\theta}_{t}\Sigma_{tt}}{\bar{\Sigma}_{tt}-\Sigma_{tt}})^{2}+K
+\frac{-(y_{i}^{true}-\bar{\mu_{i}})^{2}}{2\bar{\Sigma}_{ii}}+\frac{(y_{i}^{true}-\hat{\mu_{i}})^{2}}{2\hat{\Sigma}_{ii}}=\frac{1}{2}(\frac{1}{\hat{\Sigma}_{ii}}-\frac{1}{\bar{\Sigma}_{ii}})(y_{i}^{true}-\frac{\hat{\mu_{i}}\bar{\Sigma}_{ii}-\bar{\mu_{i}}\hat{\Sigma}_{ii}}{\bar{\Sigma}_{ii}-\hat{\Sigma}_{ii}})^{2}+K
 \end{equation}
 
 \end_inset
@@ -762,7 +557,7 @@ Completing the square, we can see
 Let, 
 \begin_inset Formula 
 \begin{equation}
-\mu_{t}=\frac{\theta_{t}\bar{\Sigma}_{tt}-\bar{\theta}_{t}\Sigma_{tt}}{\bar{\Sigma}_{tt}-\Sigma_{tt}}
+\theta_{i}=\frac{\hat{\mu_{i}}\bar{\Sigma}_{ii}-\bar{\mu_{i}}\hat{\Sigma}_{ii}}{\bar{\Sigma}_{ii}-\hat{\Sigma}_{ii}}
 \end{equation}
 
 \end_inset
@@ -770,92 +565,15 @@ Let,
 and, 
 \begin_inset Formula 
 \begin{equation}
-\sigma_{t}^{2}=\frac{1}{-\frac{1}{\Sigma_{tt}}+\frac{1}{\bar{\Sigma}_{tt}}}
+\sigma_{i}^{2}=\frac{1}{-\frac{1}{\hat{\Sigma}_{ii}}+\frac{1}{\bar{\Sigma}_{ii}}}
 \end{equation}
 
 \end_inset
 
-Because the normal is in the conjugate family, 
+then, 
 \begin_inset Formula 
 \begin{equation}
-L(y_{t}^{true})=pdf\ of\ N(\mu_{t},\sigma_{t}^{2})
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Therefore the MLE of 
-\begin_inset Formula $y_{t}^{true}$
-\end_inset
-
- is 
-\begin_inset Formula $\mu_{t}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status collapsed
-
-\begin_layout Plain Layout
-
-% place figure here showing how our estimate is the optima
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Subsection
-Calculating the inverse of the covariance matrix
-\end_layout
-
-\begin_layout Standard
-When 
-\begin_inset Formula $\hat{\Sigma}$
-\end_inset
-
- is singular, we decompose using SVD and calculate the pseudo-inverse, 
-\begin_inset Formula 
-\begin{equation}
-\hat{\Sigma}=U\begin{bmatrix}S & 0\\
-0 & 0
-\end{bmatrix}V^{T}
-\end{equation}
-
-\end_inset
-
-where the pseudo-inverse is, 
-\begin_inset Formula 
-\begin{equation}
-\hat{\Sigma}^{+}=V\begin{bmatrix}S^{-1} & 0\\
-0 & 0
-\end{bmatrix}U^{T}
-\end{equation}
-
-\end_inset
-
-We modify 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "barsigma"
-
-\end_inset
-
- which is now probably non-singular? 
-\begin_inset Formula 
-\begin{equation}
-\bar{\Sigma}=\big(\frac{\hat{\Sigma}^{+}}{\sigma^{2}}+diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})\big)^{-1}
+L(y_{i}^{true})=\frac{1}{{\sigma_{i}\sqrt{2\pi}}}e^{{{-\left({y_{i}^{true}-\theta_{i}}\right)^{2}}\mathord{\left/{\vphantom{{-\left({y_{i}^{true}-\theta_{i}}\right)^{2}}{2\sigma_{i}^{2}}}}\right.\kern -\nulldelimiterspace}{2\sigma_{i}^{2}}}}
 \end{equation}
 
 \end_inset
@@ -917,7 +635,7 @@ Using the Taylor expansion
 
 \begin_layout Standard
 Our goal is to approximate a normal with a binomial.
- Let's try this, 
+ Let, 
 \begin_inset Formula 
 \begin{equation}
 f(p)=logl(p)=log(p^{n_{1}}(1-p)^{n-n_{1}})
@@ -925,7 +643,7 @@ f(p)=logl(p)=log(p^{n_{1}}(1-p)^{n-n_{1}})
 
 \end_inset
 
-Taylor expanding 
+Taking the taylor expansion of 
 \begin_inset Formula $f(p)$
 \end_inset
 
@@ -945,7 +663,7 @@ e^{f(p)}=p^{n_{1}}(1-p)^{n-n_{1}}\approx Ce^{\frac{-(p-\hat{p})^{2}}{2\frac{-1}{
 
 \end_inset
 
-We can then let, 
+let, 
 \begin_inset Formula 
 \begin{equation}
 \mu_{t}=\hat{p}
@@ -984,15 +702,6 @@ n_{e}=\frac{\mu_{t}(1-\mu_{t})}{\sigma_{t}^{2}}
 \end_inset
 
 which is the same as above!
-\end_layout
-
-\begin_layout Subsection
-large-scale simulation
-\end_layout
-
-\begin_layout Standard
-use MS to generate haplotypes and then evolve population with recombination
- - can use Forqs here or maybe better to write my own code.
 \end_layout
 
 \begin_layout Section
@@ -1074,6 +783,57 @@ The intuition here is that sites with large
 
  coefficients are under selection.
  
+\end_layout
+
+\begin_layout Section
+Computational Issues
+\end_layout
+
+\begin_layout Subsection
+Calculating the inverse of the covariance matrix
+\end_layout
+
+\begin_layout Standard
+When 
+\begin_inset Formula $\hat{\Sigma}$
+\end_inset
+
+ is singular, we decompose using SVD and calculate the pseudo-inverse, 
+\begin_inset Formula 
+\begin{equation}
+\hat{\Sigma}=U\begin{bmatrix}S & 0\\
+0 & 0
+\end{bmatrix}V^{T}
+\end{equation}
+
+\end_inset
+
+where the pseudo-inverse is, 
+\begin_inset Formula 
+\begin{equation}
+\hat{\Sigma}^{+}=V\begin{bmatrix}S^{-1} & 0\\
+0 & 0
+\end{bmatrix}U^{T}
+\end{equation}
+
+\end_inset
+
+We modify 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "barsigma"
+
+\end_inset
+
+ which is now probably non-singular? 
+\begin_inset Formula 
+\begin{equation}
+\bar{\Sigma}=\big(\frac{\hat{\Sigma}^{+}}{\sigma^{2}}+diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})\big)^{-1}
+\end{equation}
+
+\end_inset
+
+
 \end_layout
 
 \end_body
