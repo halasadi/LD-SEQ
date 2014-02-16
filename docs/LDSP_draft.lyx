@@ -109,10 +109,6 @@ The Prior
 \end_layout
 
 \begin_layout Standard
-Consider one lineage for now.
-\end_layout
-
-\begin_layout Standard
 Let 
 \begin_inset Formula $y=(y_{1},y_{2},...,y_{p})'$
 \end_inset
@@ -304,7 +300,7 @@ let
 \begin_inset Formula $y_{i}^{true}$
 \end_inset
 
- by 
+ with 
 \begin_inset Formula $y_{i}^{obs}$
 \end_inset
 
@@ -460,7 +456,7 @@ and,
 
 \end_inset
 
-Then since the normal is in the conjugate family,
+since the normal is in the conjugate family,
 \end_layout
 
 \begin_layout Standard
@@ -484,6 +480,14 @@ Therefore a natural point estimate for
 
 \begin_layout Subsubsection
 Avoiding prior mean bias
+\end_layout
+
+\begin_layout Standard
+Note: for simplicity we set the overdispersion parameter 
+\begin_inset Formula $\sigma^{2}=1$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -519,7 +523,7 @@ We showed above,
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-y_{i}^{true}|y_{i}^{obs},M\sim N(\bar{\mu_{i}},\bar{\Sigma}_{ii})
+y_{i}^{true}|y^{obs},M\sim N(\bar{\mu_{i}},\bar{\Sigma}_{ii})
 \end{equation}
 
 \end_inset
@@ -539,7 +543,7 @@ y_{i}^{true}|M\sim N(\hat{\mu_{i}},\hat{\Sigma_{ii}})
 Thus, 
 \begin_inset Formula 
 \begin{equation}
-L(y_{i}^{true})\propto e^{\frac{-(y_{i}^{true}-\bar{\mu_{i}})^{2}}{2\bar{\Sigma}_{ii}}+\frac{(y_{i}^{true}-\hat{\mu_{i}})^{2}}{2\hat{\Sigma}_{ii}}}
+P(y^{obs}|y_{i}^{true},M)\propto e^{\frac{-(y_{i}^{true}-\bar{\mu_{i}})^{2}}{2\bar{\Sigma}_{ii}}+\frac{(y_{i}^{true}-\hat{\mu_{i}})^{2}}{2\hat{\Sigma}_{ii}}}
 \end{equation}
 
 \end_inset
@@ -577,6 +581,22 @@ L(y_{i}^{true})=\frac{1}{{\tilde{\sigma}_{i}\sqrt{2\pi}}}e^{{{-\left({y_{i}^{tru
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+with 
+\begin_inset Formula $\tilde{\mu_{i}}$
+\end_inset
+
+ being an estimate of 
+\begin_inset Formula $y_{i}^{true}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Unequal contributions of individuals to the pool
 \end_layout
 
 \begin_layout Subsection
@@ -645,7 +665,11 @@ Taking the taylor expansion of
 \begin_inset Formula $f(p)$
 \end_inset
 
- around its maximum we get, 
+ around its maximum (
+\begin_inset Formula $\hat{p})$
+\end_inset
+
+ we get, 
 \begin_inset Formula 
 \begin{equation}
 f(p)\approx f(\hat{p})+\frac{(p-\hat{p})^{2}}{2}f''(\hat{p})
@@ -683,15 +707,10 @@ where
 
 .
  Solving the equations for 
-\begin_inset Formula $n_{e}$
-\end_inset
-
- (i.e.
- 
 \begin_inset Formula $n$
 \end_inset
 
-): 
+: 
 \begin_inset Formula 
 \begin{equation}
 n_{e}=\frac{\tilde{\mu_{i}}(1-\tilde{\mu_{i}})}{\tilde{\sigma}_{i}^{2}}
@@ -781,6 +800,10 @@ The intuition here is that sites with large
 
  coefficients are under selection.
  
+\end_layout
+
+\begin_layout Subsection
+Finding the casual SNP
 \end_layout
 
 \begin_layout Section
