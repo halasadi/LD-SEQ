@@ -78,12 +78,27 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   }
   geo_sum = (1/geo_sum)
   theta = geo_sum/(nsamp + geo_sum)
+  theta = 1e-12
 
   mu = (1-theta)*colMeans(haps) + I(theta/2)
 
-  
-  # in this case of only 1_0 and 0_1 haplotypes, cov_panel is singular
-  cov_panel = cov(haps)
+  cov_panel = matrix(nrow = nloci, ncol = nloci, 0)
+  for (i in 1:nloci){
+    for (j in 1:nloci){
+      fi = colMeans(haps)[i]
+      fj = colMeans(haps)[j]
+      # temporary solution (need fixing)!
+      # currently there are no 1-1 haplotypes in the sample
+      # so f_12 = f_21 = 0
+      fij = 0
+      if (i==j){
+        cov_panel[i,j] = fi*(1-fi)
+      }
+      else{
+        cov_panel[i,j] = fij -fi*fj
+      }
+    }
+  }
   
   S = matrix(nrow = nloci, ncol = nloci, 0)
 
@@ -117,7 +132,7 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   
   # this is where the dispersion parameter comes in: eqn 13
   d = diag(1/epsilon)
-  Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)
+  Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)]
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
   theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
   
@@ -142,7 +157,7 @@ nloci = 2
 pos = c(50, 100)
 
 # starting population
-nsamp = 1000
+nsamp = 100
 # 1_0 haplotype is at 10% frequency and 0_1 is at 90%
 haps = create_haps(nsamp, 0.1)
 
@@ -181,7 +196,7 @@ mse_opt_est = rep(0, l)
 mse_obs_est  = rep(0, l)
 mean_eff_cov = rep(0, l)
 
-nreps = 500
+nreps = 1000
 
 for (i in 1:l){
   
@@ -190,7 +205,7 @@ for (i in 1:l){
   store_opt_est = rep(0, nreps)
   store_obs_est = rep(0, nreps)
   store_true_freq = rep(0, nreps)
-  store_effective_cov = rep(0, nreps)
+  store_effective_coverage = rep(0, nreps)
   
   for (j in 1:nreps){
     
@@ -211,19 +226,18 @@ for (i in 1:l){
     # only look at the estimates of SNP 1
     store_true_freq[j] = true_freq[1]
     store_opt_est[j] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
-    store_obs_est[j] = y_obs[1]
-    #store_obs_est[j] = n_1[1]/n[1]
+    store_obs_est[j] = n_1[1]/n[1]
     store_ldsp_est[j] = ldsp_est[1]
     
-    # same answer as using Taylor expansion
-    store_effective_cov[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
+    # normal to binomial
+    store_effective_coverage[j] = ((1-ldsp_est[1])*ldsp_est[1])/ldsp_est[2]
   }
   
   # calculate MSE
   mse_ldsp_est[i] = mse(store_ldsp_est, store_true_freq)
   mse_opt_est[i] = mse(store_opt_est, store_true_freq)
   mse_obs_est[i] = mse(store_obs_est, store_true_freq)
-  mean_eff_cov[i] = mean(store_effective_cov)
+  mean_eff_cov[i] = mean(store_effective_coverage)
 
 }
 
@@ -235,7 +249,6 @@ points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 
-# why not y = 2x?
 fit = lm(mean_eff_cov ~ lambdas)
 plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage", main = paste("y=", fit$coefficients[2], "x+", 
                                                                                               fit$coefficients[1], sep =""))
