@@ -111,7 +111,7 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
         S[i,j] = cov_panel[i,j]
       }
       else{
-        # distance between SNPs (e.g. SNP 1 and SNP 10)
+        # distance between SNPs
         dist = sum(d[min(i,j):(max(i,j)-1)])
         
         # hypothetical effective popsize
@@ -152,6 +152,8 @@ mse <- function(y_hat, y){
   return(sum((y_hat-y)^2)/length(y))
 }
 
+###### Begin script ##########
+
 nloci = 2
 # physical position of the two SNPs
 pos = c(50, 100)
@@ -182,9 +184,6 @@ ev_haps = create_haps(nsamp, 0.9)
 #}
 #ev_haps = haps
 ## end testing code ##
-
-
-###### Begin script ##########
 
 # lambda specifies coverage
 lambdas = seq(5, 50, by = 5)
@@ -244,14 +243,14 @@ for (i in 1:l){
 
 #### plot stuff ####
 
-plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,0.05), main = "estimate of SNP 1 frequency", lwd=2.5)
+plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,max(mse_obs_est)), main = "estimate of SNP 1 frequency", lwd=2.5)
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
 legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"), lty=c(1,1,1), lwd=c(2,2,2),col=c("black","red", "blue"))
 
 fit = lm(mean_eff_cov ~ lambdas)
-plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage", main = paste("y=", fit$coefficients[2], "x+", 
-                                                                                              fit$coefficients[1], sep =""))
+plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage", main = paste("y=", round(fit$coefficients[2],3), "x+", 
+                                                                                              round(fit$coefficients[1],3), sep =""))
 abline(lm(mean_eff_cov ~ lambdas))
 
 plot(lambdas, mse_opt_est/mse_ldsp_est, xlab = "coverage", ylab = "Opt MSE / LDSP MSE", main = "<1 is bad")
