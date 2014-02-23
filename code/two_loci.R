@@ -1,3 +1,4 @@
+#library(MASS)
 create_haps <- function(nsamp=100, per){
   # the only type of haplotypes in the pool are either 1-0 or 0-1 (for simplicity)
   # "per" specifies the percent of 1-0 haplotypes  
@@ -22,7 +23,7 @@ findMLE <- function(obs, mu, Sigma, D){
     cov_m = sigma2*Sigma + D
     sinv = solve(cov_m)
     
-    # (from hand-out and verified with Wikipedia)
+    # (from a course hand-out and verified with Wikipedia)
     logl = log(det(cov_m)) + (t(obs-mu)%*%sinv%*%(obs-mu))
     
     return(as.numeric(logl))
@@ -66,36 +67,24 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
     d[i] = as.numeric(pos[i+1])-as.numeric(pos[i])
   }
 
-  epsilon = rep(0, nloci)
-  for (i in 1:nloci){
-    epsilon[i] = (y_obs[i]*(1-y_obs[i]))/n[i]
-  }
+  epsilon = y_obs*(1-y_obs)/n
+ 
+  geo_sum = 1/sum(1/(1:(nsamp-1)))
+  #theta = geo_sum/(nsamp + geo_sum)
+  theta = 1e-8 # lower mutation rate (but theta << 1 results in singular matrix)
 
-
-  geo_sum = 0
-  for (i in 1:(nsamp-1)){
-    geo_sum = geo_sum + (1/i)
-  }
-  geo_sum = (1/geo_sum)
-  theta = geo_sum/(nsamp + geo_sum)
-  theta = 1e-12
-
-  mu = (1-theta)*colMeans(haps) + I(theta/2)
+  mu = (1-theta)*colMeans(haps) + theta/2
 
   cov_panel = matrix(nrow = nloci, ncol = nloci, 0)
+  f = colMeans(haps)
   for (i in 1:nloci){
     for (j in 1:nloci){
-      fi = colMeans(haps)[i]
-      fj = colMeans(haps)[j]
-      # temporary solution (need fixing)!
-      # currently there are no 1-1 haplotypes in the sample
-      # so f_12 = f_21 = 0
-      fij = 0
       if (i==j){
-        cov_panel[i,j] = fi*(1-fi)
+        cov_panel[i,j] = f[i]*(1-f[i])
       }
       else{
-        cov_panel[i,j] = fij -fi*fj
+        fij = sum(haps[,i]==1 & haps[,j]==1)/nsamp
+        cov_panel[i,j] = fij -f[i]*f[j]
       }
     }
   }
@@ -123,8 +112,8 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
     }
   }
   
-  # no longer singular after the following operation
-  Sigma = ((1-theta)^2)*S + I((theta/2)*(1-(theta/2)))
+  Sigma = ((1-theta)^2)*S + (theta/2)*(1-(theta/2))* diag(nloci)
+ 
   Sigma[abs(Sigma) < 1e-8] = 0
   
   #sigma2 = findMLE(y_obs, mu, Sigma, diag(epsilon))
@@ -134,6 +123,10 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   d = diag(1/epsilon)
   Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)]
   Sigma_bar = solve((1/sigma2)*Sigma_i + d)
+  
+  #Sigma_i = ginv(Sigma)
+  #Sigma_bar = ginv((1/sigma2)*Sigma_i + d)
+  
   theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
   
   # posterior estimate of SNP 1
@@ -168,21 +161,25 @@ ev_haps = create_haps(nsamp, 0.9)
 
 
 ## code for testing ##
-#haps = matrix(nrow = nsamp, ncol = 2, 0)
-#for (i in 1:50){
-#  haps[i,1] = 1
-#  haps[i,2] = 0
-#}
-#for (i in 51:60){
-#  haps[i,1] = 0
-#  haps[i,2] = 1
-#}
-
-#for (i in 61:90){
-#  haps[i,1] = 1
-#  haps[i,2] = 1
-#}
-#ev_haps = haps
+# haps = matrix(nrow = nsamp, ncol = 2, 0)
+# for (i in 1:25){
+#   haps[i,1] = 1
+#   haps[i,2] = 0
+# }
+# for (i in 26:50){
+#   haps[i,1] = 0
+#   haps[i,2] = 1
+# }
+# 
+# for (i in 51:75){
+#   haps[i,1] = 1
+#   haps[i,2] = 1
+# }
+# for (i in 76:100){
+#   haps[i,1] = 0
+#   haps[i,2] = 0
+# }
+# ev_haps = haps
 ## end testing code ##
 
 # lambda specifies coverage
@@ -198,7 +195,6 @@ mean_eff_cov = rep(0, l)
 nreps = 1000
 
 for (i in 1:l){
-  
   # where to store estimates
   store_ldsp_est = rep(0,nreps)
   store_opt_est = rep(0, nreps)
@@ -240,9 +236,9 @@ for (i in 1:l){
 
 }
 
+# check if the variance is halved
 
 #### plot stuff ####
-
 plot(lambdas, mse_ldsp_est, xlab = "coverage", ylab = "mean square error", col = "red", ylim = c(0,max(mse_obs_est)), main = "estimate of SNP 1 frequency", lwd=2.5)
 points(lambdas, mse_opt_est, col = "blue", lwd=1.5)
 points(lambdas, mse_obs_est, lwd=1.5)
@@ -251,6 +247,6 @@ legend("topright", c("read counts only at focal SNP","LDSP", "intuitive optimum"
 fit = lm(mean_eff_cov ~ lambdas)
 plot(lambdas, mean_eff_cov, xlab = "true coverage", ylab = "effective coverage", main = paste("y=", round(fit$coefficients[2],3), "x+", 
                                                                                               round(fit$coefficients[1],3), sep =""))
-abline(lm(mean_eff_cov ~ lambdas))
+abline(fit)
 
 plot(lambdas, mse_opt_est/mse_ldsp_est, xlab = "coverage", ylab = "Opt MSE / LDSP MSE", main = "<1 is bad")
