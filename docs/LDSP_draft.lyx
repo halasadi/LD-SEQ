@@ -631,7 +631,7 @@ and,
  
 \begin_inset Formula 
 \begin{equation}
-L(y_{i}^{true})=\frac{1}{{\tilde{\sigma}_{i}\sqrt{2\pi}}}e^{{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}\mathord{\left/{\vphantom{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}{2\tilde{\sigma}_{i}^{2}}}}\right.\kern -\nulldelimiterspace}{2\tilde{\sigma}_{i}^{2}}}}\label{eq:like_ytrue}
+L(y_{i}^{true})\propto e^{{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}\mathord{\left/{\vphantom{{-\left({y_{i}^{true}-\tilde{\mu_{i}}}\right)^{2}}{2\tilde{\sigma}_{i}^{2}}}}\right.\kern -\nulldelimiterspace}{2\tilde{\sigma}_{i}^{2}}}}\label{eq:like_ytrue}
 \end{equation}
 
 \end_inset
@@ -644,15 +644,12 @@ with
 \begin_inset Formula $\tilde{\mu_{i}}$
 \end_inset
 
- being an estimate of 
+ being the MLE of 
 \begin_inset Formula $y_{i}^{true}$
 \end_inset
 
- (Question: why is 
-\begin_inset Formula $\tilde{\sigma}_{i}^{2}$
-\end_inset
-
- an estimate of the variance if it is just a likelihood?) 
+.
+ 
 \begin_inset Formula $ $
 \end_inset
 
@@ -676,7 +673,7 @@ To calculate effective coverage (
 \begin_inset Formula $p_{e}$
 \end_inset
 
-), we approximate the normal with a binomial.
+), we approximate the normal likelihood with a binomial likeihood.
 \end_layout
 
 \begin_layout Subsubsection
@@ -716,8 +713,7 @@ Using the Taylor expansion
 \end_layout
 
 \begin_layout Standard
-Our goal is to approximate a normal with a binomial.
- Let, 
+Let, 
 \begin_inset Formula 
 \begin{equation}
 f(p)=logl(p)=log(p^{n_{1}}(1-p)^{n-n_{1}})

@@ -43,6 +43,7 @@ y_obs = (n_1 + 0.5)/(n + 1) # pseudo-counts
 
 geo_sum = 1/sum(1/(1:(nsamp-1)))
 theta = geo_sum/(nsamp + geo_sum)
+#theta = 1e-10
 mu = (1-theta)*colMeans(haps) + theta/2
 
 # calculate covariance matrix
@@ -73,11 +74,16 @@ sigma2 = 1
 d = diag(1/epsilon)
 Sigma_i = solve(Sigma) 
 Sigma_bar = solve((1/sigma2)*Sigma_i + d)
-theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
+mu_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
 
-# likelihood of y_1^true
-mu_1 = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
+# MLE of y_1^true
+mu_1 = (mu[1]*Sigma_bar[1,1] - mu_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
+
+#
 sigma_2_1 = 1/ ((-1/Sigma[1,1]) + 1/(Sigma_bar[1,1]))  
 
-
-
+n_e = mu_1*(1-mu_1)/sigma_2_1
+#v = vector()
+#v = c(n_e, v)
+print(lambda)
+print(n_e)
