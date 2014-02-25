@@ -2,16 +2,12 @@
 create_haps <- function(nsamp=100, per){
   # the only type of haplotypes in the pool are either 1-0 or 0-1 (for simplicity)
   # "per" specifies the percent of 1-0 haplotypes  
-  haps = matrix(nrow = nsamp, ncol = 2, 0)
-  no_10_haps = floor(per*nsamp)
-  for (i in 1:no_10_haps){
-    haps[i,1] = 1
-    haps[i,2] = 0
-  }
-  for (i in (no_10_haps+1):nsamp){
-    haps[i,1] = 0
-    haps[i,2] = 1
-  }
+  n_10_haps = floor(per*nsamp)
+  
+  n_01_haps = nsamp - n_10_haps
+  haps = c(rep(c(1,0), n_10_haps), c(rep(c(0,1), n_01_haps)))
+  # put in matrix form
+  haps = matrix(nrow = nsamp, ncol = 2, haps, byrow=TRUE)
   return(haps)
 }
 
