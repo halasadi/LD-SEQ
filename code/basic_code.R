@@ -43,7 +43,7 @@ y_obs = (n_1 + 0.5)/(n + 1) # pseudo-counts
 
 geo_sum = 1/sum(1/(1:(nsamp-1)))
 theta = geo_sum/(nsamp + geo_sum)
-#theta = 1e-10
+#theta = 0
 mu = (1-theta)*colMeans(haps) + theta/2
 
 # calculate covariance matrix
@@ -61,6 +61,8 @@ for (i in 1:nloci){
   }
 }
 
+cov_panel = cov(haps) * (nsamp-1)/nsamp
+
 S = cov_panel #if rho = 0 then S = cov_panel
 Sigma = ((1-theta)^2)*S + (theta/2)*(1-(theta/2))* diag(nloci)
 
@@ -72,9 +74,13 @@ sigma2 = 1
 
 # calculate posterior
 d = diag(1/epsilon)
-Sigma_i = solve(Sigma) 
-Sigma_bar = solve((1/sigma2)*Sigma_i + d)
-mu_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
+#Sigma_i = solve(Sigma) 
+#Sigma_bar = solve((1/sigma2)*Sigma_i + d)
+
+Sigma_bar = sigma2*Sigma - sigma2* Sigma %*% solve(diag(1/diag(d)) + sigma2*Sigma) %*% Sigma
+#mu_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
+#mu_bar2 = solve((1/sigma2)*Sigma_i + d, (1/sigma2)*Sigma_i%*%mu + d%*%y_obs)
+mu_bar = solve(diag(nloci) +sigma2 * Sigma %*% d, mu+sigma2*Sigma %*% d %*% y_obs)
 
 # MLE of y_1^true
 mu_1 = (mu[1]*Sigma_bar[1,1] - mu_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
