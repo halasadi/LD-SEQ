@@ -18,7 +18,7 @@ pool <- function(lambda, haps, nloci, nsamp){
   for (i in 1:nloci){
     
     # coverage
-    n[i] = rpois(1, lambda)
+    n[i] = lambda # rpois(1, lambda)
     
     # ensure number haps sampled is below the number of samples in the pool
     n[i] = min(n[i], nsamp)
@@ -34,7 +34,7 @@ pool <- function(lambda, haps, nloci, nsamp){
   return(rbind(n, n_1))
 }
 
-lambda = 20 # coverage
+lambda = 200 # coverage
 pooled_info = pool(lambda, haps, 2, nsamp) # perform pooling experiment
 n = pooled_info[1,] # total counts
 n_1 = pooled_info[2,] # counts of "1" allele
@@ -43,7 +43,7 @@ y_obs = (n_1 + 0.5)/(n + 1) # pseudo-counts
 
 geo_sum = 1/sum(1/(1:(nsamp-1)))
 theta = geo_sum/(nsamp + geo_sum)
-#theta = 0
+theta = 0
 mu = (1-theta)*colMeans(haps) + theta/2
 
 # calculate covariance matrix
@@ -93,3 +93,4 @@ n_e = mu_1*(1-mu_1)/sigma_2_1
 #v = c(n_e, v)
 print(lambda)
 print(n_e)
+print(n)
