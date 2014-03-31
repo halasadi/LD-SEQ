@@ -532,6 +532,11 @@ Therefore a natural point estimate for
 .
 \end_layout
 
+\begin_layout Standard
+Note: we can also calculate effective coverage here (just simply use the
+ reverse mapping of bin -> normal approximation)
+\end_layout
+
 \begin_layout Subsubsection
 Avoiding prior mean bias
 \end_layout
@@ -558,7 +563,7 @@ As mentioned above, we assume the the panel and sample individuals are drawn
 \begin_inset Formula $L(y_{i}^{true})$
 \end_inset
 
- will do the job (but I don't understand why).
+ will do the job.
 \end_layout
 
 \begin_layout Standard
@@ -882,30 +887,14 @@ Calculating the inverse of the covariance matrix
 \end_layout
 
 \begin_layout Standard
-When 
 \begin_inset Formula $\hat{\Sigma}$
 \end_inset
 
- is singular, we decompose using SVD and calculate the pseudo-inverse, 
-\begin_inset Formula 
-\begin{equation}
-\hat{\Sigma}=U\begin{bmatrix}S & 0\\
-0 & 0
-\end{bmatrix}V^{T}
-\end{equation}
+ is singular when SNPs are perfectly correlated, to fix this we...
+ (look at notes) 
+\end_layout
 
-\end_inset
-
-where the pseudo-inverse is, 
-\begin_inset Formula 
-\begin{equation}
-\hat{\Sigma}^{+}=V\begin{bmatrix}S^{-1} & 0\\
-0 & 0
-\end{bmatrix}U^{T}
-\end{equation}
-
-\end_inset
-
+\begin_layout Standard
 We modify 
 \begin_inset CommandInset ref
 LatexCommand ref

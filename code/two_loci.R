@@ -2,10 +2,10 @@
 create_haps <- function(nsamp=100, per){
   # the only type of haplotypes in the pool are either 1-0 or 0-1 (for simplicity)
   # "per" specifies the percent of 1-0 haplotypes  
-  n_10_haps = floor(per*nsamp)
+  n_11_haps = floor(per*nsamp)
   
-  n_01_haps = nsamp - n_10_haps
-  haps = c(rep(c(1,0), n_10_haps), c(rep(c(0,1), n_01_haps)))
+  n_00_haps = nsamp - n_11_haps
+  haps = c(rep(c(1,1), n_11_haps), c(rep(c(0,0), n_00_haps)))
   # put in matrix form
   haps = matrix(nrow = nsamp, ncol = 2, haps, byrow=TRUE)
   return(haps)
@@ -37,7 +37,8 @@ pool <- function(lambda, haps, nloci, nsamp){
   for (i in 1:nloci){
     
     # coverage
-    n[i] = rpois(1, lambda)
+    #n[i] = rpois(1, lambda)
+    n[i] = lambda
     
     # ensure number haps sampled is below the number of samples in the pool
     n[i] = min(n[i], nsamp)
@@ -67,23 +68,11 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
  
   geo_sum = 1/sum(1/(1:(nsamp-1)))
   #theta = geo_sum/(nsamp + geo_sum)
-  theta = 1e-8 # lower mutation rate (but theta << 1 results in singular matrix)
+  theta = 0 
 
   mu = (1-theta)*colMeans(haps) + theta/2
 
-  cov_panel = matrix(nrow = nloci, ncol = nloci, 0)
-  f = colMeans(haps)
-  for (i in 1:nloci){
-    for (j in 1:nloci){
-      if (i==j){
-        cov_panel[i,j] = f[i]*(1-f[i])
-      }
-      else{
-        fij = sum(haps[,i]==1 & haps[,j]==1)/nsamp
-        cov_panel[i,j] = fij -f[i]*f[j]
-      }
-    }
-  }
+  cov_panel = cov(haps) * (nsamp-1)/nsamp
   
   S = matrix(nrow = nloci, ncol = nloci, 0)
 
@@ -117,23 +106,17 @@ perform_LDSP <- function(y_obs, nloci, nsamp, haps, pos, n){
   
   # this is where the dispersion parameter comes in: eqn 13
   d = diag(1/epsilon)
-  Sigma_i = solve(Sigma) # there is problems, when nloci is big, kappa(Sigma) is very large (1e36)]
-  Sigma_bar = solve((1/sigma2)*Sigma_i + d)
   
-  #Sigma_i = ginv(Sigma)
-  #Sigma_bar = ginv((1/sigma2)*Sigma_i + d)
+  Sigma_bar = sigma2*Sigma - sigma2* Sigma %*% solve(diag(1/diag(d)) + sigma2*Sigma) %*% Sigma
+  mu_bar = solve(diag(nloci) +sigma2 * Sigma %*% d, mu+sigma2*Sigma %*% d %*% y_obs) # system can be singular with real counts
   
-  theta_bar = as.vector(Sigma_bar%*%((1/sigma2)*Sigma_i%*%mu + d%*%y_obs))
-  
-  # posterior estimate of SNP 1
-  #return(theta_bar[1])
-
-  mu_t = (mu[1]*Sigma_bar[1,1] - theta_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
-  
-  sigma_2_t = 1/ ((-1/Sigma[1,1]) + 1/(Sigma_bar[1,1]))  
+  # likelihood y_1^true is normal with following mean and variance
+  mu_1 = (mu[1]*Sigma_bar[1,1] - mu_bar[1]*Sigma[1,1])/(Sigma_bar[1,1] - Sigma[1,1])
+  sigma_2_1 = 1/ ((-1/Sigma[1,1]) + 1/(Sigma_bar[1,1]))  
   
   # likelihood + variance
-  return(c(mu_t, sigma_2_t))
+  return(c(mu_1, sigma_2_1))
+  #return(mu_bar)
   
 }
 
@@ -216,7 +199,7 @@ for (i in 1:l){
     
     # only look at the estimates of SNP 1
     store_true_freq[j] = true_freq[1]
-    store_opt_est[j] = (n_1[1] + (n[2]-n_1[2]))/ (n[1] + n[2])
+    store_opt_est[j] = (n_1[1] + n_1[2])/ (n[1] + n[2])
     store_obs_est[j] = n_1[1]/n[1]
     store_ldsp_est[j] = ldsp_est[1]
     
