@@ -2,14 +2,16 @@
 
 (2) Get data from Matheson et al paper: Central_LBNA, LBK_EN, Iberia_Chalcolithic, Bell_Beaker_LN, Anatolia_Neolithic. Get coverage information. Make data such as: UniqueID,  RSID, depth, reads. Need to write a script — consult with David Witonsky
 
-(3) Set up easy test simulations such as two SNPs and a random panel of 100 SNPs. Talk to Xiang about what you would expect a panel covariance matrix to look like.
+(3) Download covariance matrix from Xiang.
+
+(4) Set up easy test simulations such as two SNPs and a panel of 1000 SNPs. 
 
 (5) Set up test simulations such that:
 			(i) Have a true population panel many generation ago. Do Sequencing experiment
       (ii) Drift occurred during those generations  (can you model drift LD — ask Matthew)
       (iii) Set Evolved population as panel.
   
-(6) Download 1000 genomes panel and estimate covariance matrix — HARD. Write R package to implement this new method.
+(6) Write R package to implement this new method.
 
 (7) Estimate covariance matrix from Central_LBNA individuals, same as current?
 
