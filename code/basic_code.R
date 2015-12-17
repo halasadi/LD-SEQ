@@ -1,17 +1,9 @@
 ## This script is a pretty much copy and paste of the core componenets of two_loci.R
 ## but here it's easier to see what's going on
 rm(list = ls())
-nloci = 2
-nsamp = 1000
-
-n_11_haps = 700
-n_00_haps = nsamp - n_11_haps
-haps = c(rep(c(1,1), n_11_haps), c(rep(c(0,0), n_00_haps)))
-# put in matrix form
-haps = matrix(nrow = nsamp, ncol = 2, haps, byrow=TRUE)
 
 pool <- function(lambda, haps, nloci, nsamp){
-  ## simulate pool sequencing ##
+  ## simulate sequencing ##
   y_obs = rep(0, nloci)
   n = rep(0, nloci)
   n_1 = rep(0, nloci)

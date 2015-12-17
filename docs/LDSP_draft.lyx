@@ -1,5 +1,5 @@
-#LyX 2.0 created this file. For more info see http://www.lyx.org/
-\lyxformat 413
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
 \begin_document
 \begin_header
 \textclass paper
@@ -20,37 +20,50 @@
 \font_roman default
 \font_sans default
 \font_typewriter default
+\font_math auto
 \font_default_family default
 \use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
-
 \graphics default
 \default_output_format default
 \output_sync 0
 \bibtex_command default
 \index_command default
-\paperfontsize 10
+\paperfontsize default
 \spacing single
 \use_hyperref false
 \papersize a4paper
-\use_geometry false
-\use_amsmath 2
-\use_esint 1
-\use_mhchem 0
-\use_mathdots 0
+\use_geometry true
+\use_package amsmath 2
+\use_package amssymb 2
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 0
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
 \cite_engine basic
+\cite_engine_type default
+\biblio_style plain
 \use_bibtopic false
 \use_indices false
 \paperorientation portrait
 \suppress_date true
+\justification true
 \use_refstyle 0
 \index Index
 \shortcut idx
 \color #008000
 \end_index
+\leftmargin 1.3cm
+\topmargin 1.4cm
+\rightmargin 1.3cm
+\bottommargin 1.4cm
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation skip
@@ -69,7 +82,8 @@
 \begin_body
 
 \begin_layout Title
-PooLD - Increasing coverage in Pooled sequencing using LD
+LD-SEQ: Increasing the effective coverage of SEQuencing experiments using
+ Linkage Dis-equilibrium
 \end_layout
 
 \begin_layout Author
@@ -93,10 +107,6 @@ Calculate effective coverage using haplotypic information
 \end_layout
 
 \begin_layout Section
-Calculating effective coverage
-\end_layout
-
-\begin_layout Subsection
 The Prior
 \end_layout
 
@@ -281,8 +291,8 @@ where
 
 \end_layout
 
-\begin_layout Subsection
-The likelihood
+\begin_layout Section
+The likelihood for pooled sequencing experiments
 \end_layout
 
 \begin_layout Standard
@@ -377,7 +387,7 @@ where
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Section
 Avoiding 
 \begin_inset Formula $y_{i}^{obs}=0$
 \end_inset
@@ -404,15 +414,186 @@ y_{i}^{obs}=\frac{n_{i}^{1}+\frac{1}{2}}{n_{i}+1}
 \end_layout
 
 \begin_layout Standard
-which has nice properties.
+which has nice Bayesian properties.
 \end_layout
 
-\begin_layout Subsubsection
-Incorporating base quality scores
+\begin_layout Section
+The likelihood for ancient dna sequencing experiments
 \end_layout
 
 \begin_layout Subsection
-The Posterior
+The Likelihood under the full model
+\end_layout
+
+\begin_layout Standard
+Instead of sequencing from a pool, we (1) sample an individual from the
+ population and (2) conduct a sequencing experiment on that individual.
+ We repeat this process for all individuals.
+ Let 
+\begin_inset Formula $X_{k}$
+\end_inset
+
+ denote the genotype of the kth individual (which is unobserved).
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+X_{i,j}\sim Binomial(2,y_{i}^{true})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n_{i,j}^{1}|X_{i,j}\sim Bin(n_{i,j},\frac{X_{i,j}}{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Integrating out 
+\begin_inset Formula $X_{k}$
+\end_inset
+
+, we see that the likelihood 
+\begin_inset Formula $f(y_{i}^{true})$
+\end_inset
+
+ (up to a constant) is,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{j=1}^{k}\log\left((y_{i}^{true}){}^{2}0^{n_{i,j}^{0}}+(1-y_{i}^{true})^{2}0^{n_{i,j}^{1}}+y_{i}^{true}(1-y_{i}^{true})2^{1-n_{i,j}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can approximate the likelihood above with a normal likelihood using the
+ laplace approximation (see appendix), yielding
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+P(D|y_{i}^{true})\propto N(u_{i},\epsilon_{i}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+u_{i}=y_{i}^{true}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\epsilon_{i}^{2}\approx\frac{-1}{f''(\hat{y_{i}})}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $y_{i}^{obs}=\hat{y_{i}}$
+\end_inset
+
+ is the MLE of the likelihood which must be computed numerically.
+ However, 
+\begin_inset Formula $f''(p)$
+\end_inset
+
+ can be computed analytically as,
+\begin_inset Formula 
+\begin{multline*}
+\sum_{i=1}^{k}(\frac{2\ 0^{n_{i,j}^{0}}+2\ 0^{n_{i,j}^{1}}-2^{2-n_{i,j}}}{p^{2}0^{n_{i,j}^{0}}+(1-p)^{2}0^{n_{i}}+p(1-p)2^{1-n_{i,j}}}-\frac{(2p0^{n_{i,j}^{0}}-2(1-p)0^{n_{i,j}^{1}}+(1-p)2^{1-n_{i,j}}-p2^{1-n_{i,j}}){}^{2}}{(p^{2}0^{n_{i,j}^{0}}+(1-p)^{2}0^{n_{i,j}^{1}}+p(1-p)2^{1-n_{i,j}}){}^{2}})\\
+\end{multline*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As before,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+P(y^{obs}|y^{true})\ \dot{\sim}\ N_{p}(y^{true},\ diag(\epsilon_{1}^{2},...,\epsilon_{p}^{2}))
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Using an approximate likelihood with similar MSE
+\end_layout
+
+\begin_layout Standard
+Let our estimate of 
+\begin_inset Formula $y_{i}^{true}$
+\end_inset
+
+ be,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+y_{i}^{obs}=\frac{\sum_{j=1}^{k}n_{i,j}^{1}}{\sum_{j=1}^{k}n_{i,j}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and let, 
+\begin_inset Formula $\epsilon_{i}=y_{i}^{obs}(1-y_{i}^{obs})\frac{\sum_{j=1}^{k}n_{i,j}+(n_{i,j})^{2}}{2(\sum_{j=1}^{k}n_{i,j})^{2}}$
+\end_inset
+
+ (which can be drived using using the law of total variance), then by CLT
+ 
+\begin_inset Formula $P(y^{obs}|y^{true})\ \dot{\sim}\ N_{p}(y^{true},\ diag(\epsilon_{1}^{2},...,\epsilon_{p}^{2}))$
+\end_inset
+
+ as before.
+\end_layout
+
+\begin_layout Section
+The Posterior 
 \end_layout
 
 \begin_layout Standard
@@ -526,10 +707,10 @@ Therefore a natural point estimate for
 
 \begin_layout Standard
 Note: we can also calculate effective coverage here (just simply use the
- reverse mapping of bin -> normal approximation)
+ reverse mapping of bin to normal approximation)
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Avoiding prior mean bias
 \end_layout
 
@@ -653,7 +834,7 @@ with
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Section
 Computing the Effective Coverage
 \end_layout
 
@@ -666,7 +847,8 @@ To calculate effective coverage (
 \begin_inset Formula $p_{e}$
 \end_inset
 
-), we approximate the normal likelihood with a binomial likeihood.
+), we approximate the normal likelihood with a binomial likeihood (which
+ can also be justified by using the Laplace approximation (see appendix).
 \end_layout
 
 \begin_layout Subsubsection
@@ -701,7 +883,11 @@ n_{e}=\frac{\tilde{\mu_{i}}(1-\tilde{\mu_{i}})}{\tilde{\sigma}_{i}^{2}}
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Section
+Appendix
+\end_layout
+
+\begin_layout Subsection
 Using the Taylor expansion
 \end_layout
 
@@ -781,92 +967,11 @@ n=\frac{\tilde{\mu_{i}}(1-\tilde{\mu_{i}})}{\tilde{\sigma}_{i}^{2}}
 which is the same as above!
 \end_layout
 
-\begin_layout Section
-Phase II - estimating 
-\begin_inset Formula $\beta$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Let 
-\begin_inset Formula $f_{i,k,j}$
-\end_inset
-
- denote the frequency of the 
-\begin_inset Formula $j$
-\end_inset
-
-th SNP in population 
-\begin_inset Formula $i$
-\end_inset
-
- and replicate 
-\begin_inset Formula $k$
-\end_inset
-
-.
- Then,
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-log(\frac{1-f_{i,k,j}}{f_{i,k,j}})=\mu_{j}+\beta_{j}g_{i}+\epsilon
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-where 
-\begin_inset Formula $\epsilon\sim N_{(}0,\sigma_{d}^{2})$
-\end_inset
-
-, 
-\begin_inset Formula $\sigma_{d}^{2}$
-\end_inset
-
- is the variance due to drift, 
-\begin_inset Formula $\mu_{j}$
-\end_inset
-
- is the frequency of the 
-\begin_inset Formula $j$
-\end_inset
-
-th SNP in the founding population and 
-\begin_inset Formula 
-\[
-g_{i}=\left\{ \begin{array}{lr}
--1 & i=0\\
-0 & i=1\\
-1 & i=2
-\end{array}\right.
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-The intuition here is that sites with large 
-\begin_inset Formula $\beta$
-\end_inset
-
- coefficients are under selection.
- 
-\end_layout
-
-\begin_layout Section
+\begin_layout Subsection
 Computational Issues
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Calculating the inverse of the covariance matrix
 \end_layout
 
