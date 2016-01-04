@@ -15,14 +15,14 @@ source("chunk-options.R")
 ```{r}
 metadata <- read.csv("../data/nature16152-s2.csv", stringsAsFactors=FALSE, header=TRUE)
 # hard cut off of 2.5X. Read somewhere online that you need at least 50 samples for imputation. Why not?
-candidates <- metadata$Coverage > 1.5# & as.numeric(metadata$SNPs) > 800000 
+candidates <- metadata$Coverage > 2.5 & as.numeric(metadata$SNPs) > 650000 
 #candidates <- as.numeric(metadata$SNPs[candidates]) > 700000 
 print("Number of SNPs for each candidate: ")
 print(metadata$SNPs[candidates])
 hist(metadata$Coverage[candidates], 20, xlim = c(0, 30), xlab = "coverage of candidates", main = "")
 print(metadata$Country[candidates])
 print(metadata$Archaeological.culture[candidates])
-print(metadata$Min.Date)
+hist(as.numeric(metadata$Min.Date[candidates]))
 ```
 
 ## Session information

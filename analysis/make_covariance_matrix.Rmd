@@ -1,0 +1,84 @@
+---
+title: "Making a covariance matrix from data"
+author: "Hussein Al-Asadi"
+date: 2015-12-28
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+```
+
+```{r wrangle}
+# wrangle data
+d <- read.table("../data/european_blocks/chr2/2_135158578_137042794.raw", header = T, stringsAsFactors = FALSE)
+snplist <- unlist(lapply(strsplit(colnames(d)[-c(1:6)], "_"), function(x) {return (x[1])}))
+# X: n x p genotype matrix
+X <- as.matrix(d[,-c(1:6)])
+
+rmb_map <- read.table("../data/map/inter_from_hap_intersect_ancient_chr_2.genetic_map", header = F, stringsAsFactors = FALSE)
+
+exl_snps <- which(!(snplist %in% rmb_map$V1))
+X <- X[,-exl_snps]
+cummap <- rmb_map[which(rmb_map$V1 %in% snplist),]$V3
+```
+
+```{r}
+shrink_cov <- function(m, Ne, cummap, Xpanel){
+  # USAGE: compute the shrinkage estimator of covariance matrix in Wen and Stephens (2010)
+  #INPUT:
+  #    m: the number of individuals
+  #    Ne: the effective population size (diploid)
+  #    cummap: cumulative genetic map in cM
+  #    Xpanel: (unphased) genotype panel, numIND by numSNP
+  #OUTPUT:
+  #    SigHat: estimated covariance matrix of haplotype, numSNP by numSNP
+
+    # theta is related to mutation
+    nmsum = sum(1 / (1:(2*m-1)));
+    theta = (1/nmsum) / (2*m + 1/nmsum);
+    
+    n = dim(Xpanel)[1]
+    
+    # S is obtained from Sigma_panel by shrinking off-diagonal entries toward 0
+    # NB: Xpanel is unphased genotype panel data; 
+    #     0.5 is based on random mating assumption
+    S = 0.5 * (1/n) * t(Xpanel) %*% Xpanel;
+    S = upper.tri(S, diag=TRUE);
+    # first compute the values on and above the 1st diagonal
+    # approx. save computation by a half (n choose 2) versus n
+    numSNP = dim(S)[2]
+    for (i in 1:numSNP){
+      for (j in i:numSNP){
+        rho = 4 * Ne * (cummap[j] - cummap[i]) / 100;
+        shrinkage = exp(-rho/(2*m));
+        # hard thresholding to obtain sparse and banded estimator
+        if (shrinkage < 1e-8){
+          shrinkage = 0;
+        }
+        S[i,j] = shrinkage * S[i, j];
+      }
+    }
+    
+    S = S + t(upper.tri(S, diag = FALSE))
+    # derived from Li and Stephens model (2003)
+    SigHat = (1-theta)^2 * S + 0.5*theta * (1-0.5*theta) * diag(1, numSNP);
+}
+
+
+```
+
+
+```{r}
+# finally shrink the covariance matrix
+Sighat <- shrink_cov(nrow(X), 10000, cummap, X)
+```
+
+## Session information
+
+```{r info}
+sessionInfo()
+```
