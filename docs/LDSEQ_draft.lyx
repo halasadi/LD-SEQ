@@ -971,35 +971,103 @@ which is the same as above!
 Computational Issues
 \end_layout
 
-\begin_layout Subsubsection
-Calculating the inverse of the covariance matrix
+\begin_layout Standard
+Using the Woodbury formula, we can re-write sigma bar as
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $\hat{\Sigma}$
-\end_inset
-
- is singular when SNPs are perfectly correlated, to fix this we...
- (look at notes) 
-\end_layout
-
-\begin_layout Standard
-We modify 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "barsigma"
-
-\end_inset
-
- which is now probably non-singular? 
 \begin_inset Formula 
-\begin{equation}
-\bar{\Sigma}=\big(\frac{\hat{\Sigma}^{+}}{\sigma^{2}}+diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})\big)^{-1}
-\end{equation}
+\[
+\bar{{\Sigma}}=\sigma^{2}\hat{\Sigma}-\sigma^{2}\hat{\Sigma}(diag(\epsilon_{1},...,\epsilon_{p})+\sigma^{2}\hat{\Sigma})^{-1}\sigma^{2}\hat{\Sigma}
+\]
 
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $(diag(\epsilon_{1},...,\epsilon_{p})+\sigma^{2}\hat{\Sigma})$
+\end_inset
+
+ is positive definite because 
+\begin_inset Formula $x^{T}diag(\epsilon_{1},...,\epsilon_{p})x>0$
+\end_inset
+
+ and 
+\begin_inset Formula $\sigma^{2}\hat{\Sigma}\geq0$
+\end_inset
+
+ since it is a covariance matrix, therefore
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+x^{T}(diag(\epsilon_{1},...,\epsilon_{p})+\sigma^{2}\hat{\Sigma})x=x^{T}diag(\epsilon_{1},...,\epsilon_{p})x+x^{T}\sigma^{2}\hat{\Sigma}x>0
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus, we can use the Cholesky Decomposition to rewrite 
+\begin_inset Formula $diag(\epsilon_{1},...,\epsilon_{p})+\sigma^{2}\hat{\Sigma}=LL^{T}$
+\end_inset
+
+and then by back substiution find the inverse of 
+\begin_inset Formula $L$
+\end_inset
+
+ such that,
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+(diag(\epsilon_{1},...,\epsilon_{p})+\sigma^{2}\hat{\Sigma})^{-1}=(L^{-1})^{T}L^{-1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which is more stable and quicker than directly computing the inverse (see
+ ref 1)
+\end_layout
+
+\begin_layout Standard
+Finally, by some re-arranging, we compute 
+\begin_inset Formula $\bar{{\mu}}$
+\end_inset
+
+ by solving the system of equations
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+(I+\sigma^{2}\hat{\Sigma}diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}}))\bar{{\mu}}=\hat{{\mu}}+\sigma^{2}\hat{\Sigma}diag(\frac{1}{\epsilon_{1}},...,\frac{1}{\epsilon_{p}})y^{obs}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Bibliography
+\begin_inset CommandInset bibitem
+LatexCommand bibitem
+key "key-1"
+
+\end_inset
+
+http://www.mathworks.com/matlabcentral/fileexchange/34511-fast-and-accurate-symmet
+ric-positive-definite-matrix-inverse-using-cholesky-decomposition
 \end_layout
 
 \end_body
