@@ -6,7 +6,8 @@ title: "Home"
 
 **Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
 
-## Wavelet methods
+# Checking for data-quality
 
 *   [Notes on coverage in ancient dna](read_coverage.html)
+*   [Does my code seem to work for estimating covariance matrices?](make_covariance_matrix.html)
 
