@@ -145,50 +145,53 @@ img {
 </ul>
 </div>
 
-<p><strong>Last updated:</strong> 2016-01-14</p>
-<p><strong>Code version:</strong> be2d47b91fd7609a7e9ad96e546a83f0a27a53b6</p>
+<p><strong>Last updated:</strong> 2016-01-17</p>
+<p><strong>Code version:</strong> a3348b992767d23e669aedfd1381cab5e19532d6</p>
 <pre class="r"><code># wrangle data
-d &lt;- read.table(&quot;../data/european_blocks/chr2/2_135158578_137042794.raw&quot;, header = T, stringsAsFactors = FALSE)
-snplist &lt;- unlist(lapply(strsplit(colnames(d)[-c(1:6)], &quot;_&quot;), function(x) {return (x[1])}))
+d &lt;- read.table(&quot;../data/european_blocks/chr2/2_135158578_137042794.impute.hap&quot;, header = F, stringsAsFactors = FALSE)
+snplist &lt;- read.table(&quot;../data/european_blocks/chr2/2_135158578_137042794.impute.legend&quot;, header=T, stringsAsFactors = FALSE)
 # X: n x p genotype matrix
-X &lt;- as.matrix(d[,-c(1:6)])
+X &lt;- t(as.matrix(d))
 
-rmb_map &lt;- read.table(&quot;../data/map/inter_from_hap_intersect_ancient_chr_2.genetic_map&quot;, header = F, stringsAsFactors = FALSE)
-
-exl_snps &lt;- which(!(snplist %in% rmb_map$V1))
+rmb_map &lt;- read.table(&quot;../data/map/chr2.interpolated_genetic_map&quot;, header = F, stringsAsFactors = FALSE)
+my_matches &lt;- match(snplist$ID, rmb_map$V1)
+exl_snps &lt;- which(is.na(my_matches))
 X &lt;- X[,-exl_snps]
-cummap &lt;- rmb_map[which(rmb_map$V1 %in% snplist),]$V3
-positions &lt;- rmb_map[which(rmb_map$V1 %in% snplist),]$V2</code></pre>
+cummap &lt;- rmb_map$V3[which(!is.na(my_matches))]
+positions &lt;- rmb_map$V2[which(!is.na(my_matches))]</code></pre>
 <pre class="r"><code>shrink_cov &lt;- function(Ne, cummap, Xpanel){
   # USAGE: compute the shrinkage estimator of covariance matrix in Wen and Stephens (2010)
   #INPUT:
   #    Ne: the effective population size (diploid)
   #    cummap: cumulative genetic map in cM
-  #    Xpanel: (unphased) genotype panel, numIND by numSNP
+  #    Xpanel: phased genotype panel, numIND by numSNP
   #OUTPUT:
   #    SigHat: estimated covariance matrix of haplotype, numSNP by numSNP
 
     # theta is related to mutation
   
-    n = nrow(Xpanel)
+    # we have haploid data
+    numIND = nrow(Xpanel)/2
     numSNP = ncol(Xpanel)
 
-    nsum = sum(1 / (1:(2*n-1)));
-    theta = (1/nsum) / (2*n + 1/nsum);
+    nsum = sum(1 / (1:(2*numIND-1)));
+    theta = (1/nsum) / (2*numIND + 1/nsum);
     
     # S is obtained from Sigma_panel by shrinking off-diagonal entries toward 0
-    # NB: Xpanel is unphased genotype panel data; 
-    #     0.5 is based on random mating assumption
-    S &lt;- 0.5 * (1/n) * t(Xpanel) %*% Xpanel;
+    # NB: Xpanel is phased genotype panel data; 
+    S &lt;- ((2*numIND-1)/(2*numIND)) * cov(Xpanel);
+    
     for (i in 1:numSNP){
       for (j in 1:numSNP){
         rho = 4 * Ne * (abs(cummap[j] - cummap[i])) / 100;
-        shrinkage = exp(-rho/(2*n));
+        shrinkage = exp(-rho/(2*numIND));
         # hard thresholding to obtain sparse and banded estimator
         if (shrinkage &lt; 1e-8){
           shrinkage = 0;
         }
-        S[i,j] = shrinkage * S[i, j];
+        if (i != j){
+          S[i,j] = shrinkage * S[i, j];
+        }
       }
     }
     
@@ -198,11 +201,16 @@ positions &lt;- rmb_map[which(rmb_map$V1 %in% snplist),]$V2</code></pre>
 }</code></pre>
 <pre class="r"><code># finally shrink the covariance matrix
 Sighat &lt;- shrink_cov(10000, cummap, X)
-bins &lt;- cut(1:length(Sighat[6,]), 10)
+p &lt;- dim(Sighat)[1]
+bins &lt;- cut(1:p, 10)
 plot(tapply(Sighat[6,], bins, mean))</code></pre>
-<p><img src="figure/make_covariance_matrix.Rmd/unnamed-chunk-2-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/make_covariance_matrix.Rmd/execution-1.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
 <pre class="r"><code>plot(Sighat[6,])</code></pre>
-<p><img src="figure/make_covariance_matrix.Rmd/unnamed-chunk-2-2.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="figure/make_covariance_matrix.Rmd/execution-2.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(tapply(Sighat[600,], bins, mean))</code></pre>
+<p><img src="figure/make_covariance_matrix.Rmd/execution-3.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(Sighat[600,])</code></pre>
+<p><img src="figure/make_covariance_matrix.Rmd/execution-4.png" title="" alt="" width="672" style="display: block; margin: auto;" /></p>
 <div id="session-information" class="section level2">
 <h2>Session information</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
