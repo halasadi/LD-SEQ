@@ -24,6 +24,8 @@ rmb_map <- read.table("../data/map/chr2.interpolated_genetic_map", header = F, s
 my_matches <- match(snplist$ID, rmb_map$V1)
 exl_snps <- which(is.na(my_matches))
 X <- X[,-exl_snps]
+freq <- colMeans(X)
+names(freq) <- snplist$ID[-exl_snps]
 cummap <- rmb_map$V3[which(!is.na(my_matches))]
 positions <- rmb_map$V2[which(!is.na(my_matches))]
 ```
@@ -77,6 +79,8 @@ shrink_cov <- function(Ne, cummap, Xpanel){
 ```{r execution}
 # finally shrink the covariance matrix
 Sighat <- shrink_cov(10000, cummap, X)
+save(Sighat, file = "../data/european_blocks/chr2/2_135158578_137042794.cov.Rdata")
+save(freq, file = "../data/european_blocks/chr2/2_135158578_137042794.freq.Rdata")
 p <- dim(Sighat)[1]
 bins <- cut(1:p, 10)
 plot(tapply(Sighat[6,], bins, mean))

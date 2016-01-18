@@ -430,17 +430,25 @@ Instead of sequencing from a pool, we (1) sample an individual from the
  population and (2) conduct a sequencing experiment on that individual.
  We repeat this process for all individuals.
  Let 
-\begin_inset Formula $X_{k}$
+\begin_inset Formula $X_{i,j}$
 \end_inset
 
- denote the genotype of the kth individual (which is unobserved).
+ denote the genotype of the 
+\begin_inset Formula $i$
+\end_inset
+
+th individual at the 
+\begin_inset Formula $j$
+\end_inset
+
+th snp (which is unobserved).
  
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-X_{i,j}\sim Binomial(2,y_{i}^{true})
+X_{i,j}\sim Binomial(2,y_{j}^{true})
 \]
 
 \end_inset
@@ -465,7 +473,7 @@ Integrating out
 \end_inset
 
 , we see that the likelihood 
-\begin_inset Formula $f(y_{i}^{true})$
+\begin_inset Formula $f(y_{j}^{true})$
 \end_inset
 
  (up to a constant) is,
@@ -474,7 +482,7 @@ Integrating out
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\sum_{j=1}^{k}\log\left((y_{i}^{true}){}^{2}0^{n_{i,j}^{0}}+(1-y_{i}^{true})^{2}0^{n_{i,j}^{1}}+y_{i}^{true}(1-y_{i}^{true})2^{1-n_{i,j}}\right)
+\sum_{i=1}^{k}\log\left((y_{j}^{true}){}^{2}0^{n_{i,j}^{0}}+(1-y_{j}^{true})^{2}0^{n_{i,j}^{1}}+y_{j}^{true}(1-y_{j}^{true})2^{1-n_{i,j}}\right)
 \]
 
 \end_inset
@@ -490,7 +498,7 @@ We can approximate the likelihood above with a normal likelihood using the
 \begin_layout Standard
 \begin_inset Formula 
 \[
-P(D|y_{i}^{true})\propto N(u_{i},\epsilon_{i}^{2})
+P(D|y_{j}^{true})\propto N(u_{j},\epsilon_{j}^{2})
 \]
 
 \end_inset
@@ -501,7 +509,7 @@ P(D|y_{i}^{true})\propto N(u_{i},\epsilon_{i}^{2})
 \begin_layout Standard
 \begin_inset Formula 
 \[
-u_{i}=y_{i}^{true}
+u_{j}=y_{j}^{true}
 \]
 
 \end_inset
@@ -512,7 +520,7 @@ u_{i}=y_{i}^{true}
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\epsilon_{i}^{2}\approx\frac{-1}{f''(\hat{y_{i}})}
+\epsilon_{j}^{2}\approx\frac{-1}{f''(\hat{y_{j}})}
 \]
 
 \end_inset

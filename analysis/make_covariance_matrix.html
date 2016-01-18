@@ -145,8 +145,8 @@ img {
 </ul>
 </div>
 
-<p><strong>Last updated:</strong> 2016-01-17</p>
-<p><strong>Code version:</strong> a3348b992767d23e669aedfd1381cab5e19532d6</p>
+<p><strong>Last updated:</strong> 2016-01-18</p>
+<p><strong>Code version:</strong> 9c2d1252c425366985fdaece7a597dc0316ab8c5</p>
 <pre class="r"><code># wrangle data
 d &lt;- read.table(&quot;../data/european_blocks/chr2/2_135158578_137042794.impute.hap&quot;, header = F, stringsAsFactors = FALSE)
 snplist &lt;- read.table(&quot;../data/european_blocks/chr2/2_135158578_137042794.impute.legend&quot;, header=T, stringsAsFactors = FALSE)
@@ -157,6 +157,8 @@ rmb_map &lt;- read.table(&quot;../data/map/chr2.interpolated_genetic_map&quot;, 
 my_matches &lt;- match(snplist$ID, rmb_map$V1)
 exl_snps &lt;- which(is.na(my_matches))
 X &lt;- X[,-exl_snps]
+freq &lt;- colMeans(X)
+names(freq) &lt;- snplist$ID[-exl_snps]
 cummap &lt;- rmb_map$V3[which(!is.na(my_matches))]
 positions &lt;- rmb_map$V2[which(!is.na(my_matches))]</code></pre>
 <pre class="r"><code>shrink_cov &lt;- function(Ne, cummap, Xpanel){
@@ -201,6 +203,8 @@ positions &lt;- rmb_map$V2[which(!is.na(my_matches))]</code></pre>
 }</code></pre>
 <pre class="r"><code># finally shrink the covariance matrix
 Sighat &lt;- shrink_cov(10000, cummap, X)
+save(Sighat, file = &quot;../data/european_blocks/chr2/2_135158578_137042794.cov.Rdata&quot;)
+save(freq, file = &quot;../data/european_blocks/chr2/2_135158578_137042794.freq.Rdata&quot;)
 p &lt;- dim(Sighat)[1]
 bins &lt;- cut(1:p, 10)
 plot(tapply(Sighat[6,], bins, mean))</code></pre>
