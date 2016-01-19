@@ -1,26 +1,35 @@
-
-## generate test data
-
-simulate_data <- function(nind, ptrue, avg_coverage){
-  X <- rbinom(n=nind, size=2, ptrue)
-  N <-rpois(nind, avg_coverage)
-  n <-rbinom(n=nind, size = N, X/2)  
-  # n is the number of non-ref alleles and N is coverage at that site
-  ret <- data.frame(N = N, n =n)
-  return(ret)
+ll <- function(ytrue, n, n1){
+  eps = 0.0
+  return(sum(log( (1-ytrue)^2*eps^(n1) + 2^(1-n)*ytrue*(1-ytrue) + (eps^(n-n1))*ytrue*ytrue)))
 }
 
-ptrue = 0.1
-nind <- 5
-avg_coverage <- 5
-yobs <- c()
-epsilon <- c()
-nSNPs <- 10
-for (i in 1:nSNPs){
-  data <- simulate_data(nind, ptrue, avg_coverage)
-  yobs[i] <- sum(data$n)/sum(data$N)
-  epsilon[i] <- yobs[i]*(1-yobs[i])*sum(data$n+(data$n)^2)/(2*sum(data$n)^2)
+# MAYBE RE-CHECK FORMULA with MATHEMATICA
+fpp <- function(mle, n, n1){
+  n0 = n - n1
+  a <- sum( (2*(0^n0) + 2*(0^n1) - 2^(2-n)) / (mle^2 * (0^n0) + ((1-mle)^2)*(0^n) + mle*(1-mle)*(2^(1-n))))
+  b <- sum( (2*mle*(0^n0) - 2*(1-mle)*(0^n1) + (1-mle)*(2^(1-n)) - mle*(2^(1-n)))^2 / 
+              (mle^2 * (0^n0) + ((1-mle)^2)*(0^n1) + mle*(1-mle)*(2^(1-n)))^2)
+  return(a-b)
 }
 
-estimate_sigmabar <- function
-
+LDSEQ <- function(n1, n, Sighat, freq, numSNP){
+  # n1    : NOW; vector of length p, FUTURE; dimension n x p, matrix of "1" reads
+  # n     : FUTURE; dimension n x p, matrix of total number of reads
+  # Sighat: estimated covariance matrix from the panel data using Wen & Stephens, 2011
+  # freq  : frequency in the panel
+  
+  mles <- c()
+  epsq <- c()
+  tol = 1e-15
+  for (j in 1:numSNP){
+    mles[j] <- optimize(f=ll, c(0,1), tol = tol, n = n[j], n1 = n1[j], maximum=TRUE)$maximum
+    if (mles[j] < tol){
+      mles[j] = 0
+    }
+    epsq[j] <- -1/fpp(mles[j], n = n[j], n1 = n1[j])
+  }
+  
+  ## Crap, it seems the approximation isn't working so well.
+  ## the second derivative at the mle is infinite? So var = 1/Inf is 0. 
+  
+}
