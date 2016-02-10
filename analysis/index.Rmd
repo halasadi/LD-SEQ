@@ -9,5 +9,11 @@ title: "Home"
 # Checking for data-quality
 
 *   [Notes on coverage in ancient dna](read_coverage.html)
+*   [Imputation of lactase and implement Matthew's idea](verify_lactase.html)
+*   [Imputation of fads1](verify_fads1.html)
+*   [Imputation of a neutral SNP](verify_rs9375844.html)
+*   [Counting the number of imputed hetereozygote calls](count_het_calls.html)
+
+# Implementing new method
 *   [Does my code seem to work for estimating covariance matrices?](make_covariance_matrix.html)
 

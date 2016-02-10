@@ -1,0 +1,61 @@
+---
+title: "Counting the number of het calls"
+author: "Hussein Al-Asadi"
+date: 2016-02-05
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+```
+
+## Reading in data
+
+```{r, echo = F}
+
+fads_data <- read.table("../data/fads1/impute2.out", stringsAsFactors = FALSE)
+sample_info <- read.table("../data/lactase/impute.sample", header=T, stringsAsFactors = F)
+```
+
+## Process data
+
+```{r, echo = F}
+offSet = 6
+cntLANDS = 0
+cntOTHER = 0
+
+for (ii in 1:nrow(fads_data)){
+  d <- fads_data[ii,offSet:length(fads_data[ii,])]
+  imp <- matrix(d, nrow = 3)
+
+  for (jj in 1:length(sample_info$ID_2)){
+    id <- sample_info$ID_2[jj]
+  
+    impHET <- imp[2,jj]
+    if (impHET < 0.9){
+      next
+    }
+
+    if (id == "Loschbour" | id == "Ust_Ishim" | id == "Stuttgart"){
+      cntLANDS = cntLANDS + 1
+    } else{
+      cntOTHER = cntOTHER + 1
+    }
+
+  }
+}
+
+print(cntOTHER)
+print(cntLANDS)
+```
+
+You can see that a heterozygote is never called for the ~230 individuals filtered by Mathieson (`r cntOTHER`) but hetereozygotes are called for the 3 individuals filtered in lazirdus (`r cntLANDS`). This is out of ~ 11k snps. 
+
+## Session information
+
+```{r info}
+sessionInfo()
+```

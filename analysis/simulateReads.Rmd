@@ -1,0 +1,53 @@
+---
+title: "Simulate Reads"
+author: "Hussein Al-Asadi"
+date: 2016-01-18
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+source("../code/LD-Seq.R")
+```
+
+## Simulate reads
+
+```{r simulate_function}
+simulate_genotype <- function(ptrue, cov){
+  X <- rbinom(n = 1, size = 2, prob = ptrue)
+  n <-rbinom(n=1, size = cov, X/2)  
+  # n is the number of non-ref alleles
+  return(n)
+}
+
+# Sighat
+load("../data/european_blocks/chr2/2_135158578_137042794.cov.Rdata")
+# freq
+load("../data/european_blocks/chr2/2_135158578_137042794.freq.Rdata")
+
+# simulate reads (5x) from every SNP
+numSNP <- length(freq)
+n1 <- rep(0, numSNP)
+n <- rep(5, numSNP)
+for (i in 1:numSNP){
+  n1[i] <- simulate_genotype(freq[i], n[i])
+}
+
+# Let's try to impute this SNP
+n1[1000] <- 0
+n[1000] <- 0
+
+
+LDSEQ(n1, n, Sighat, freq, length(freq))
+
+
+```
+
+## Session information
+
+```{r info}
+sessionInfo()
+```
