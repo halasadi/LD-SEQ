@@ -1,0 +1,88 @@
+---
+title: "Exploratory analysis of imputation of a neutral SNP"
+author: "Hussein Al-Asadi"
+date: 2016-02-05
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+```
+
+## Reading in data
+
+```{r, echo = F}
+math <- read.table("../data/rs9375844/math.txt", header=T, stringsAsFactors = F)
+allentoft <- read.table("../data/rs9375844/allen.txt", header = T, stringsAsFactors = F)
+gamba <- read.table("../data/rs9375844/gamba.txt", header = T, stringsAsFactors = F)
+laz <- read.table("../data/rs9375844/laz.txt", header = T, stringsAsFactors = F)
+total <- rbind(allentoft, math, gamba, laz)
+total <- total[!duplicated(total),]
+neutral_data <- read.table("../data/rs9375844/impute2_neutral.out", stringsAsFactors = FALSE)
+sample_info <- read.table("../data/lactase/impute.sample", header=T, stringsAsFactors = F)
+
+onekgneutral <- read.csv("../data/rs9375844//373430-IndividualGenotypes-Homo_sapiens-Variation--80.csv", header = T, stringsAsFactors = F)
+nind <- dim(onekgneutral)[1]
+freqAA <- sum(onekgneutral$Genotype..forward.strand. == "A|A")/nind
+freqAG <- sum((onekgneutral$Genotype..forward.strand. == "G|A") | (onekgneutral$Genotype..forward.strand. == "A|G"))/nind
+freqGG <- sum(onekgneutral$Genotype..forward.strand. == "G|G")/nind
+```
+
+## Process data
+
+```{r}
+offSet = 6
+MINCOV <- 3
+Acnt <- vector()
+Gcnt <- vector()
+impGG <- vector()
+impGA <- vector()
+impAA <- vector()
+samp_info <- vector()
+d <- neutral_data[offSet:length(neutral_data)]
+imp <- matrix(d, nrow = 3)
+for (i in 1:length(sample_info$ID_2)){
+  id <- sample_info$ID_2[i]
+  ind <- which(total$Sample == id)
+  if (length(ind) == 0){
+    next
+  }
+  cov <- total$rs9375844.chr6.99463771.A[ind] + total$rs9375844.chr6.99463771.G[ind] 
+
+  if (cov < MINCOV){
+    next
+  }
+
+  if (max(unlist(imp[,i])) < 0.9){
+    next
+  }
+  
+  Acnt <- c(Acnt, total$rs9375844.chr6.99463771.A[ind])
+  Gcnt <- c(Gcnt, total$rs9375844.chr6.99463771.G[ind])
+  impGG <- c(impGG, imp[1,i])
+  impGA <- c(impGA, imp[2,i])
+  impAA <- c(impAA, imp[3,i])
+  samp_info <- c(samp_info, id)
+}
+
+impGG <- unlist(impGG)
+impGA <- unlist(impGA)
+impAA <- unlist(impAA)
+
+df <- data.frame(samp_info,Gcnt,Acnt,impGG,impGA,impAA, stringsAsFactors = F)
+```
+
+### Output posterior probability table
+```{r}
+print(df)
+```
+
+
+## Session information
+
+```{r info}
+sessionInfo()
+```

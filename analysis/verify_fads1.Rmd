@@ -1,0 +1,88 @@
+---
+title: "Exploratory analysis of imputation of FADS1"
+author: "Hussein Al-Asadi"
+date: 2016-02-05
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+```
+
+## Reading in data
+
+```{r, echo = F}
+math <- read.table("../data/fads1/math.txt", header=T, stringsAsFactors = F)
+allentoft <- read.table("../data/fads1/allen.txt", header = T, stringsAsFactors = F)
+gamba <- read.table("../data/fads1/gamba.txt", header = T, stringsAsFactors = F)
+laz <- read.table("../data/fads1/laz.txt", header = T, stringsAsFactors = F)
+total <- rbind(allentoft, math, gamba, laz)
+total <- total[!duplicated(total),]
+fads_data <- read.table("../data/fads1/impute2_fads1.out", stringsAsFactors = FALSE)
+sample_info <- read.table("../data/lactase/impute.sample", header=T, stringsAsFactors = F)
+
+onekgfads <- read.csv("../data/fads1/373430-IndividualGenotypes-Homo_sapiens-Variation--80.csv", header = T, stringsAsFactors = F)
+nind <- dim(onekgfads)[1]
+freqCC <- sum(onekgfads$Genotype..forward.strand. == "C|C")/nind
+freqCT <- sum((onekgfads$Genotype..forward.strand. == "T|C") | (onekgfads$Genotype..forward.strand. == "C|T"))/nind
+freqTT <- sum(onekgfads$Genotype..forward.strand. == "T|T")/nind
+```
+
+## Process data
+
+```{r}
+offSet = 6
+MINCOV <- 3
+Ccnt <- vector()
+Tcnt <- vector()
+impCC <- vector()
+impCT <- vector()
+impTT <- vector()
+samp_info <- vector()
+d <- fads_data[offSet:length(fads_data)]
+imp <- matrix(d, nrow = 3)
+for (i in 1:length(sample_info$ID_2)){
+  id <- sample_info$ID_2[i]
+  ind <- which(total$Sample == id)
+  if (length(ind) == 0){
+    next
+  }
+  cov <- total$rs174546.chr11.61569830.C[ind] + total$rs174546.chr11.61569830.T[ind]
+
+  if (cov < MINCOV){
+    next
+  }
+
+  if (max(unlist(imp[,i])) < 0.9){
+    next
+  }
+  
+  Ccnt <- c(Ccnt, total$rs174546.chr11.61569830.C[ind])
+  Tcnt <- c(Tcnt, total$rs174546.chr11.61569830.T[ind])
+  impCC <- c(impCC, imp[1,i])
+  impCT <- c(impCT, imp[2,i])
+  impTT <- c(impTT, imp[3,i])
+  samp_info <- c(samp_info, id)
+}
+
+impCC <- unlist(impCC)
+impCT <- unlist(impCT)
+impTT <- unlist(impTT)
+
+df <- data.frame(samp_info,Ccnt,Tcnt,impCC,impCT,impTT, stringsAsFactors = F)
+```
+
+### Output posterior probability table
+```{r}
+print(df)
+```
+
+
+## Session information
+
+```{r info}
+sessionInfo()
+```

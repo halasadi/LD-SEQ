@@ -1,0 +1,201 @@
+---
+title: "Exploratory analysis of imputation of the lactase SNP"
+author: "Hussein Al-Asadi"
+date: 2016-02-05
+---
+
+**Last updated:** `r Sys.Date()`
+
+**Code version:** `r system("git log -1 --format='%H'", intern = TRUE)`
+
+```{r chunk-options, include=FALSE}
+source("chunk-options.R")
+```
+
+## Reading in data
+
+```{r, echo = F}
+math1 <- read.table("../data/lactase/math_1.txt", header=T, stringsAsFactors = F)
+math2 <- read.table("../data/lactase/math_2.txt", header=T, stringsAsFactors = F)
+allentoft <- read.table("../data/lactase/allentoft.txt", header = T, stringsAsFactors = F)
+gamba <- read.table("../data/lactase/gamba.txt", header = T, stringsAsFactors = F)
+laz <- read.table("../data/lactase/laz.txt", header = T, stringsAsFactors = F)
+total <- rbind(allentoft, math1, math2, gamba, laz)
+total <- total[!duplicated(total),]
+lac_data <- read.table("../data/lactase/impute2_lactase.out", stringsAsFactors = FALSE)
+#lac_data <- read.table("../data/lactase/impute2_lactase_500khaps.out", stringsAsFactors = FALSE)
+sample_info <- read.table("../data/lactase/impute.sample", header=T, stringsAsFactors = F)
+
+onekgLactase <- read.csv("../data/lactase/373430-IndividualGenotypes-Homo_sapiens-Variation--80.csv", header = T, stringsAsFactors = F)
+nind <- dim(onekgLactase)[1]
+freqAA <- sum(onekgLactase$Genotype..forward.strand. == "A|A")/nind
+freqAG <- sum((onekgLactase$Genotype..forward.strand. == "G|A") | (onekgLactase$Genotype..forward.strand. == "A|G"))/nind
+freqGG <- sum(onekgLactase$Genotype..forward.strand. == "G|G")/nind
+```
+
+## Process data
+
+```{r}
+offSet = 6
+MINCOV <- 3
+Acnt <- vector()
+Gcnt <- vector()
+impGG <- vector()
+impGA <- vector()
+impAA <- vector()
+samp_info <- vector()
+d <- lac_data[offSet:length(lac_data)]
+imp <- matrix(d, nrow = 3)
+for (i in 1:length(sample_info$ID_2)){
+  id <- sample_info$ID_2[i]
+  ind <- which(total$Sample == id)
+  if (length(ind) == 0){
+    next
+  }
+  cov <- total$rs4988235.chr2.136608646.A[ind] + total$rs4988235.chr2.136608646.G[ind] 
+
+  if (cov < MINCOV){
+    next
+  }
+
+  if (max(unlist(imp[,i])) < 0.9){
+    next
+  }
+  
+  Acnt <- c(Acnt, total$rs4988235.chr2.136608646.A[ind])
+  Gcnt <- c(Gcnt, total$rs4988235.chr2.136608646.G[ind])
+  impGG <- c(impGG, imp[1,i])
+  impGA <- c(impGA, imp[2,i])
+  impAA <- c(impAA, imp[3,i])
+  samp_info <- c(samp_info, id)
+}
+
+impGG <- unlist(impGG)
+impGA <- unlist(impGA)
+impAA <- unlist(impAA)
+
+df <- data.frame(samp_info,Gcnt,Acnt,impGG,impGA,impAA, stringsAsFactors = F)
+```
+
+### Output posterior probability table
+```{r}
+print(df)
+```
+
+If we focus our attention to the cases where the AA allele, we see that 
+
+* There are two heter. genotypes that are imputed as AA with very high probabiliy
+* There is one true GG (20 reads covering that allele) but is imputed as AA with prob.
+* There is one with GG (3 reads) but is imputed as AA with high prob. (Maybe this actually a hetereozy?)
+
+Questions: Why is the GG with 20 reads imputed wrongly?
+
+```
+snp_id rs_id position a0 a1 exp_freq_a1 info certainty type info_type0 concord_type0 r2_type0
+--- rs4988235:136608646:G:A 136608646 G A 0.102 0.811 0.964 0 -1 -1 -1
+
+But,
+sample freq AG = 4/73
+sample freq AA = 0
+
+A bias in the imputation is consistent with the fact that the imputed frequency is 0.102.
+```
+
+And, 
+frequency of AA in 1000g: `r freqAA`
+frequency of AG in 1000g: `r freqAG`
+frequency of GG in 1000g: `r freqGG`
+
+## Controlling for panel frequency bias
+
+### obtain likelihood table
+```{r}
+lik_AA <- vector()
+lik_AG <- vector()
+lik_GG <- vector()
+
+for (i in 1:nrow(df)){
+  lik_GG[i] <- round(df$impGG[i]/freqGG,3)
+  lik_AG[i] <- round(df$impGA[i]/freqAG,3)
+  lik_AA[i] <- round(df$impAA[i]/freqAA,3)
+}
+
+lik_table <- data.frame(lik_GG,lik_AG,lik_AA, stringsAsFactors = F)
+rownames(lik_table) <- samp_info
+colnames(lik_table) <- c("GG", "AG", "AA")
+
+```
+
+### Use Sarah's code
+```{r}
+library("SQUAREM")
+
+#'@title mixEM
+#'  @details Fits a k component mixture model \deqn{f(x|\pi) = \sum_k \pi_k f_k(x)} to independent
+##' and identically distributed data \eqn{x_1,\dots,x_n}. 
+##' Estimates posterior on mixture proportions \eqn{\pi} by Variational Bayes, 
+##' with a Dirichlet prior on \eqn{\pi}. 
+##' Algorithm adapted from Bishop (2009), Pattern Recognition and Machine Learning, Chapter 10.
+##' 
+#' @param matrix_lik a n by k matrix with (j,k)th element equal to \eqn{f_k(x_j)}.
+#' @param prior a k vector of the parameters of the Dirichlet prior on \eqn{\pi}. Recommended to be rep(1,k)
+#' @param pi.init the initial value of the posterior parameters. If not specified defaults to the prior parameters.
+#' @param control A list of control parameters for the SQUAREM algorithm, default value is set to be   control.default=list(K = 1, method=3, square=TRUE, step.min0=1, step.max0=1, mstep=4, kr=1, objfn.inc=1,tol=1.e-07, maxiter=5000, trace=FALSE). 
+#' 
+#' @return A list, whose components include point estimates (pihat), 
+#' the parameters of the fitted posterior on \eqn{\pi} (pipost),
+#' the bound on the log likelihood for each iteration (B)
+#' and a flag to indicate convergence (converged).
+#'  
+#' @export
+
+# helper functions used by mixEM
+normalize = function(x){return(x/sum(x))}
+
+fixpoint = function(pi, matrix_lik, prior){  
+  pi = normalize(pmax(0,pi)) #avoid occasional problems with negative pis due to rounding
+  m  = t(pi * t(matrix_lik)) # matrix_lik is n by k; so this is also n by k
+  m.rowsum = rowSums(m)
+  classprob = m/m.rowsum #an n by k matrix
+  pinew = normalize(colSums(classprob) + prior - 1)
+  return(pinew)
+}
+
+negpenloglik = function(pi,matrix_lik,prior){return(-penloglik(pi,matrix_lik,prior))}
+
+penloglik = function(pi, matrix_lik, prior){
+   pi = normalize(pmax(0,pi))
+   m  = t(pi * t(matrix_lik)) # matrix_lik is n by k; so this is also n by k
+   m.rowsum = rowSums(m)
+   loglik = sum(log(m.rowsum))
+   subset = (prior != 1.0)
+   priordens = sum((prior-1)[subset]*log(pi[subset]))
+   return(loglik+priordens)
+} 
+
+mixEM = function(matrix_lik,prior,pi.init=NULL,control=list()){
+  control.default=list(K = 1, method=3, square=TRUE, step.min0=1, step.max0=1, mstep=4, kr=1, objfn.inc=1,tol=1.e-07, maxiter=5000, trace=FALSE)
+  namc=names(control)
+  if (!all(namc %in% names(control.default))) 
+    stop("unknown names in control: ", namc[!(namc %in% names(control.default))])
+  controlinput=modifyList(control.default, control)
+  
+  k=dim(matrix_lik)[2]
+  if(is.null(pi.init)){
+    pi.init = rep(1/k,k)# Use as starting point for pi
+  } 
+  res = squarem(par=pi.init,fixptfn=fixpoint, objfn=negpenloglik,matrix_lik=matrix_lik, prior=prior, control=controlinput)
+  return(list(pihat = normalize(pmax(0,res$par)), B=res$value.objfn, 
+              niter = res$iter, converged=res$convergence))
+}
+out <- mixEM(matrix_lik=lik_table, prior=rep(0,3))
+print(out$pihat)
+```
+
+Seems like this procedure didn't change the answer much. The frequency of the 'A' allele is still around 8%.
+
+## Session information
+
+```{r info}
+sessionInfo()
+```
